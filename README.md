@@ -70,6 +70,17 @@ The interface opens in **French**. People can switch to English (and back) with 
 - **Speaker notes** (Notes button under the slide) and **presenter view** in Present mode (P): notes, timer, next slide. Notes also go into the PowerPoint export.
 - **14 templates** (6 new: business plan, quarterly results, roadmap, workshop, event, restaurant menu).
 
+### Animations (version 1.2)
+
+- **Animate panel** (Animer in the rail, or the Animate button): 26 entrance effects (Rise, Pan, Fade, Pop, Wipe, Blur, Breathe, Baseline, Drift, Tectonic, Tumble, Neon, Scrapbook, Stomp, Bounce, Roll, Skate, Spread, Burst, Clarify, Block, Ascend, Shift, Merge, Typewriter, Photo zoom/flow), with direction, speed, delay, and text by line / word / letter.
+- **On click** steps (like PowerPoint builds), **exit** animations, **loop** effects (Breathe, Pulse, Wiggle, Float, Spin, Flicker).
+- **Page animation** (one effect for every element, one after another) and **10 transitions**, including **Match & move**: duplicate a slide, move things on the copy, and they glide between the two slides.
+- Engine: `app/js/anim.js` (Web Animations API); panel: `app/js/animpanel.js`.
+
+### The .dkly file
+
+One self-contained presentation (`app/js/dkly.js`): a ZIP package whose first entry is `mimetype` = `application/vnd.deckly.presentation` (the signature), then `deckly.json` (manifest), `document.json` (slides, animations, notes) and `media/` + `fonts/` (every picture and custom font used). File → *Save as a Deckly file* or *Save as a slideshow* (opens straight in Present mode). The installer registers `.dkly` with Windows: a double-click opens it in Deckly. Old `.deckly` files still open.
+
 ## Built-in library (`app/assets/`)
 
 | Pack | Count | Licence |

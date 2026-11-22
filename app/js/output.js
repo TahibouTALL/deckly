@@ -4,23 +4,26 @@ import { slideNode, elementNode, miniSlide } from './render.js';
 import { SHAPES } from './assets.js';
 import { toast } from './ui.js';
 import { t as tr } from './i18n.js';
-import { playAnimations } from './pro.js';
+import { packDkly, unpackDkly, isDkly } from './dkly.js';
+import { stepsOf, hideForClick, playIn, startLoop, playGroup, playOutAll, playTransition, slideTransition } from './anim.js';
 
 const $ = (s) => document.querySelector(s);
 
 // ---------- present ----------
-let pi = 0, presenter = false, t0 = 0, timer = null;
+// Each slide plays: its transition, then its automatic animations; every click shows the next "on click"
+// element; leaving a slide plays the exit animations first.
+let pi = 0, presenter = false, t0 = 0, timer = null, cur = null, clickIdx = 0, steps = null, scale = 1, busyT = null;
 export function present(from = 0, withPresenter = false) {
-  pi = from; presenter = withPresenter; t0 = Date.now();
+  pi = from; presenter = withPresenter; t0 = Date.now(); cur = null;
   const p = $('#present'); p.classList.remove('hidden');
   p.requestFullscreen?.().catch(() => {});
-  showP();
+  showSlide(pi, { animate: true });
   window.addEventListener('keydown', pKey);
-  window.addEventListener('resize', showP);
+  window.addEventListener('resize', onResize);
   document.addEventListener('fullscreenchange', onFs);
-  $('#pPrev').onclick = () => step(-1); $('#pNext').onclick = () => step(1); $('#pExit').onclick = exitP;
-  $('#pPresenter').onclick = () => { presenter = !presenter; showP(); };
-  $('#presentStage').onclick = (e) => { if (!e.target.closest('a')) step(1); };
+  $('#pPrev').onclick = () => prev(); $('#pNext').onclick = () => next(); $('#pExit').onclick = exitP;
+  $('#pPresenter').onclick = () => { presenter = !presenter; onResize(); updateHud(); };
+  $('#presentStage').onclick = (e) => { if (!e.target.closest('a')) next(); };
   clearInterval(timer); timer = setInterval(tick, 1000); tick();
 }
 function tick() {
@@ -28,17 +31,39 @@ function tick() {
   $('#pvTimer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   $('#pvClock').textContent = new Date().toLocaleTimeString(document.documentElement.lang === 'fr' ? 'fr-FR' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
 }
-function showP() {
+function layout() {
   const D = state.doc, st = $('#presentStage');
   const side = presenter ? 380 : 0;
-  const s = Math.min((window.innerWidth - side) / D.w, window.innerHeight / D.h);
-  st.style.width = D.w * s + 'px'; st.style.height = D.h * s + 'px';
+  scale = Math.min((window.innerWidth - side) / D.w, window.innerHeight / D.h);
+  st.style.width = D.w * scale + 'px'; st.style.height = D.h * scale + 'px';
   st.style.marginRight = side + 'px';
-  const n = slideNode(D.slides[pi], D); n.style.transform = `scale(${s})`;
-  st.innerHTML = ''; st.appendChild(n);
-  playAnimations(n, D.slides[pi]);
-  $('#pCount').textContent = `${pi + 1} / ${D.slides.length}`;
-  // presenter view: notes, timer, next slide
+  return st;
+}
+// built: show everything at once (going back, resizing) / animate: play transition + animations
+function showSlide(i, { animate = false, built = false } = {}) {
+  const D = state.doc, slide = D.slides[i], st = layout();
+  const old = cur, oldSlide = old ? D.slides[+old.dataset.index] : null;
+  const n = slideNode(slide, D); n.dataset.index = i;
+  n.style.transform = `scale(${scale})`;
+  steps = stepsOf(slide);
+  clickIdx = built ? steps.clicks.length : 0;
+  if (!built) hideForClick(n, slide);
+  st.appendChild(n);
+  cur = n; pi = i;
+  let tdur = 0;
+  if (animate && old) tdur = playTransition(old, n, slideTransition(slide), { accent: '#6C4CF5', oldSlide, newSlide: slide });
+  if (old) setTimeout(() => old.remove(), tdur + 30);
+  if (!old) st.querySelectorAll('.slide-render').forEach((x) => { if (x !== n) x.remove(); });
+  if (animate) {
+    const after = slideTransition(slide)?.type === 'morph' ? tdur : tdur * 0.6;
+    for (const el of steps.auto) { const en = n.querySelector(`[data-id="${el.id}"]`); if (en) { const t = playIn(en, el, after); startLoop(en, el, t); } }
+  } else for (const el of slide.elements) { const en = n.querySelector(`[data-id="${el.id}"]`); if (en) startLoop(en, el, 0); }
+  updateHud();
+}
+function updateHud() {
+  const D = state.doc;
+  const left = steps.clicks.length - clickIdx;
+  $('#pCount').textContent = `${pi + 1} / ${D.slides.length}${left > 0 ? ' · ' + tr('{n} click(s) left', { n: left }) : ''}`;
   $('#presenter').classList.toggle('hidden', !presenter);
   $('#pPresenter').classList.toggle('on', presenter);
   $('#present').classList.toggle('pv', presenter);
@@ -47,24 +72,37 @@ function showP() {
     $('#pvNotes').textContent = notes || tr('No notes for this slide.');
     $('#pvNotes').classList.toggle('empty', !notes);
     const nx = $('#pvNext'); nx.innerHTML = '';
-    if (pi + 1 < D.slides.length) nx.appendChild(miniSlide(D.slides[pi + 1], D, 340));
+    if (left > 0) nx.innerHTML = `<div class="pv-end">${tr('Next click: {n} more element(s) on this slide', { n: left })}</div>`;
+    else if (pi + 1 < D.slides.length) nx.appendChild(miniSlide(D.slides[pi + 1], D, 340));
     else nx.innerHTML = `<div class="pv-end">${tr('End of presentation')}</div>`;
   }
 }
-function step(d) { const n = pi + d; if (n < 0) return; if (n >= state.doc.slides.length) { exitP(); return; } pi = n; showP(); }
+function next() {
+  if (busyT) return; // an exit animation is playing
+  if (clickIdx < steps.clicks.length) { playGroup(cur, steps.clicks[clickIdx]); clickIdx++; updateHud(); return; }
+  if (pi + 1 >= state.doc.slides.length) { exitP(); return; }
+  const outEnd = playOutAll(cur, state.doc.slides[pi]);
+  if (outEnd) busyT = setTimeout(() => { busyT = null; showSlide(pi + 1, { animate: true }); }, outEnd);
+  else showSlide(pi + 1, { animate: true });
+}
+function prev() { clearTimeout(busyT); busyT = null; if (pi > 0) showSlide(pi - 1, { built: true }); }
+// resizing (or entering full screen) only rescales what is on screen: running animations keep going
+function onResize() { layout(); $('#presentStage').querySelectorAll('.slide-render').forEach((n) => (n.style.transform = `scale(${scale})`)); }
 function pKey(e) {
-  if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); step(1); }
-  if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); step(-1); }
-  if (e.key === 'Home') { pi = 0; showP(); } if (e.key === 'End') { pi = state.doc.slides.length - 1; showP(); }
+  if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+  if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+  if (e.key === 'Home') showSlide(0, { animate: true }); if (e.key === 'End') showSlide(state.doc.slides.length - 1, { built: true });
   if (e.key === 'Escape') exitP();
-  if (e.key === 'p' || e.key === 'P') { presenter = !presenter; showP(); }
+  if (e.key === 'p' || e.key === 'P') { presenter = !presenter; onResize(); updateHud(); }
 }
 function onFs() { if (!document.fullscreenElement && !$('#present').classList.contains('hidden')) exitP(); }
 function exitP() {
   $('#present').classList.add('hidden');
-  clearInterval(timer);
-  window.removeEventListener('keydown', pKey); window.removeEventListener('resize', showP); document.removeEventListener('fullscreenchange', onFs);
+  clearInterval(timer); clearTimeout(busyT); busyT = null; cur = null;
+  $('#presentStage').innerHTML = '';
+  window.removeEventListener('keydown', pKey); window.removeEventListener('resize', onResize); document.removeEventListener('fullscreenchange', onFs);
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  document.dispatchEvent(new Event('deckly-present-end'));
 }
 
 // ---------- rendering slides to images ----------
@@ -142,19 +180,34 @@ async function elementPng(el) {
 }
 
 // ---------- .deckly files ----------
-export function saveFile() {
-  const blob = new Blob([JSON.stringify({ app: 'deckly', v: 1, doc: state.doc })], { type: 'application/json' });
-  const url = URL.createObjectURL(blob); download(url, fname('deckly')); setTimeout(() => URL.revokeObjectURL(url), 2000);
-  toast('Saved as a file');
+// Saves the design as one .dkly file (design, animations, photos, fonts). In the desktop app: Windows' own "Save as" window.
+export async function saveFile(presentOnOpen = false) {
+  toast('Preparing the Deckly file…');
+  try {
+    const info = window.decklyDesktop ? await window.decklyDesktop.info() : null;
+    const blob = await packDkly(state.doc, { presentOnOpen, appVersion: info?.version || '' });
+    const name = fname('dkly');
+    if (window.decklyDesktop?.saveFile) {
+      const where = await window.decklyDesktop.saveFile(name, new Uint8Array(await blob.arrayBuffer()));
+      if (where) toast(tr('Saved: {name}', { name: where.split(/[\\/]/).pop() }));
+      return;
+    }
+    const url = URL.createObjectURL(blob); download(url, name); setTimeout(() => URL.revokeObjectURL(url), 3000);
+    toast('Saved as a file');
+  } catch (e) { console.error(e); toast('Could not create the Deckly file'); }
 }
-export async function readFile(file) {
-  const j = JSON.parse(await file.text());
+// Opens a .dkly file (or an old .deckly one). Returns { doc, manifest }.
+export async function readFile(fileOrBytes) {
+  const buf = fileOrBytes instanceof ArrayBuffer ? fileOrBytes : fileOrBytes.buffer instanceof ArrayBuffer && !(fileOrBytes instanceof Blob) ? fileOrBytes.buffer.slice(fileOrBytes.byteOffset, fileOrBytes.byteOffset + fileOrBytes.byteLength) : await fileOrBytes.arrayBuffer();
+  if (await isDkly(buf)) return unpackDkly(buf);
+  const j = JSON.parse(new TextDecoder().decode(buf)); // version 1.0 / 1.1 files
   const doc = j.doc || j; if (!doc.slides) throw new Error('not a Deckly file');
-  return doc;
+  return { doc, manifest: {} };
 }
 
 // ---------- the Download window (formats, high resolution, which slides) ----------
 const FORMATS = [
+  ['dkly', 'sparkles', 'Deckly (.dkly)', 'Keeps animations, design and fonts. Opens in Deckly, even offline'],
   ['png', 'image', 'PNG', 'Best for images with transparency and sharp text'],
   ['jpg', 'image', 'JPG', 'Smaller files, best for photos'],
   ['pdf', 'file-text', 'PDF standard', 'Light file, for sharing on screen'],
@@ -165,13 +218,14 @@ const FORMATS = [
 const QUALITIES = [[1, 'Standard'], [2, 'High resolution ×2'], [3, 'Very high ×3'], ['4k', '4K']];
 export function downloadDialog(modal, closeModal, ic) {
   const D = state.doc;
-  let fmt = 'png', q = 2, pages = 'all', transparent = false, jq = 92;
+  let fmt = 'dkly', q = 2, pages = 'all', transparent = false, jq = 92, showOnOpen = false;
   const dims = (k) => { const s = k === '4k' ? 3840 / Math.max(D.w, D.h) : k; return `${Math.round(D.w * s)} × ${Math.round(D.h * s)} px`; };
   const draw = () => {
     modal(`<h3>${ic('download')} Download</h3>
       <div class="dl-sec">File type</div>
       <div class="dl-formats">${FORMATS.map(([k, i, n, d]) => `<button class="dl-fmt ${k === fmt ? 'on' : ''}" data-fmt="${k}">${ic(i)}<b>${n}</b><small>${d}</small></button>`).join('')}</div>
       ${['png', 'jpg', 'pdfprint', 'pptx'].includes(fmt) ? `<div class="dl-sec">Size</div><div class="chips">${QUALITIES.map(([k, n]) => `<button class="chip ${k === q ? 'on' : ''}" data-q="${k}">${n}</button>`).join('')}</div><p class="hint">${dims(q)}</p>` : ''}
+      ${fmt === 'dkly' ? `<div class="dl-sec">${tr('Deckly file')}</div><p class="hint" style="font-size:13px">${tr('One file with everything inside: slides, animations, transitions, photos and fonts. Send it, open it on another computer with Deckly, and present — even without internet.')}</p><div class="toggle-row"><span>${tr('Open straight in Present mode')}</span><button class="switch ${showOnOpen ? 'on' : ''}" id="dlShow"></button></div>` : ''}
       ${fmt === 'png' ? `<div class="toggle-row"><span>Transparent background</span><button class="switch ${transparent ? 'on' : ''}" id="dlTr"></button></div>` : ''}
       ${fmt === 'jpg' ? `<div class="range-row"><label>Quality</label><input type="range" id="dlJq" min="50" max="100" value="${jq}"><span class="v">${jq}%</span></div>` : ''}
       ${['png', 'jpg', 'svg'].includes(fmt) ? `<div class="dl-sec">Slides</div><div class="chips"><button class="chip ${pages === 'cur' ? 'on' : ''}" data-p="cur">${tr('This slide ({n})', { n: state.slide + 1 })}</button><button class="chip ${pages === 'all' ? 'on' : ''}" data-p="all">${tr('All slides ({n})', { n: D.slides.length })}</button></div>${pages === 'all' && D.slides.length > 1 ? '<p class="hint">Several slides are downloaded together in one .zip file.</p>' : ''}` : ''}
@@ -181,8 +235,9 @@ export function downloadDialog(modal, closeModal, ic) {
     c.querySelectorAll('[data-q]').forEach((b) => (b.onclick = () => { q = b.dataset.q === '4k' ? '4k' : +b.dataset.q; draw(); }));
     c.querySelectorAll('[data-p]').forEach((b) => (b.onclick = () => { pages = b.dataset.p; draw(); }));
     c.querySelector('#dlTr')?.addEventListener('click', () => { transparent = !transparent; draw(); });
+    c.querySelector('#dlShow')?.addEventListener('click', () => { showOnOpen = !showOnOpen; draw(); });
     const r = c.querySelector('#dlJq'); if (r) r.oninput = () => { jq = +r.value; r.nextElementSibling.textContent = jq + '%'; };
-    c.querySelector('#dlGo').onclick = () => { closeModal(); runDownload(fmt, q === '4k' ? 3840 / Math.max(D.w, D.h) : q, pages, transparent, jq / 100); };
+    c.querySelector('#dlGo').onclick = () => { closeModal(); fmt === 'dkly' ? saveFile(showOnOpen) : runDownload(fmt, q === '4k' ? 3840 / Math.max(D.w, D.h) : q, pages, transparent, jq / 100); };
   };
   draw();
 }

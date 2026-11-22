@@ -4,6 +4,7 @@ import { miniSlide } from './render.js';
 import { ic } from './assets.js';
 import { popover, closePopover, toast } from './ui.js';
 import { t as tr } from './i18n.js';
+import { hasAnim } from './anim.js';
 
 const $ = (s) => document.querySelector(s);
 const TH = 86;
@@ -31,7 +32,7 @@ function thumb(i) {
   const t = document.createElement('div');
   t.className = 'slide-thumb' + (i === state.slide ? ' active' : '');
   t.style.width = w + 'px'; t.draggable = true; t.dataset.i = i;
-  t.innerHTML = `<span class="num-tag">${i + 1}</span><button class="more" title="${tr('Slide options')}">${ic('ellipsis')}</button><div class="mini"></div>`;
+  t.innerHTML = `<span class="num-tag">${i + 1}</span><button class="more" title="${tr('Slide options')}">${ic('ellipsis')}</button><div class="mini"></div>${state.doc.slides[i].transition || state.doc.slides[i].elements.some(hasAnim) ? `<span class="anim-badge" title="${tr('Animated')}">${ic('sparkles')}</span>` : ''}`;
   t.querySelector('.mini').appendChild(miniSlide(D.slides[i], D, w - 4));
   return t;
 }
@@ -83,7 +84,7 @@ function menu(anchor, i) {
   });
 }
 function dupSlide(i) {
-  const s = clone(state.doc.slides[i]); s.id = uid(); s.elements.forEach((e) => (e.id = uid()));
+  const s = clone(state.doc.slides[i]); s.id = uid(); s.elements.forEach((e) => { e.mid = e.mid || e.id; e.id = uid(); }); // mid links the copies to the originals (Match & move)
   state.doc.slides.splice(i + 1, 0, s); state.slide = i + 1; state.sel = []; commit(); emit('slide');
 }
 function delSlide(i) {

@@ -1,5 +1,5 @@
 // Deckly desktop app (Electron): opens the editor in its own window and handles updates.
-const { app, BrowserWindow, protocol, net, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, protocol, net, ipcMain, shell, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
@@ -33,7 +33,28 @@ function createWindow() {
   win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith('deckly://')) { e.preventDefault(); if (/^https?:/.test(url)) shell.openExternal(url); } });
 }
 
-app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
+// ---------- .dkly files opened from Windows (double-click, "Open with") ----------
+const fileArg = (argv) => argv.slice(1).find((a) => /\.(dkly|deckly)$/i.test(a) && fs.existsSync(a));
+let pendingFile = fileArg(process.argv), pageReady = false;
+function sendFile(p) {
+  try { win.webContents.send('file:open', fs.readFileSync(p)); } catch (e) { console.error('cannot read', p, e.message); }
+}
+ipcMain.on('file:ready', () => { pageReady = true; if (pendingFile) { sendFile(pendingFile); pendingFile = null; } });
+ipcMain.handle('file:save', async (_e, name, bytes) => {
+  const r = await dialog.showSaveDialog(win, {
+    defaultPath: path.join(app.getPath('documents'), String(name).replace(/[\\/:*?"<>|]+/g, '')),
+    filters: [{ name: 'Deckly', extensions: ['dkly'] }],
+  });
+  if (r.canceled || !r.filePath) return null;
+  fs.writeFileSync(r.filePath, Buffer.from(bytes));
+  return r.filePath;
+});
+
+app.on('second-instance', (_e, argv) => {
+  if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+  const p = fileArg(argv);
+  if (p) { if (pageReady) sendFile(p); else pendingFile = p; }
+});
 app.whenReady().then(() => {
   protocol.handle('deckly', (req) => {
     const p = decodeURIComponent(new URL(req.url).pathname);

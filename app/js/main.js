@@ -153,8 +153,13 @@ function wireTopbar() {
     (p) => { p.onclick = (ev) => { const u = ev.target.closest('[data-u]')?.dataset.u; if (!u) return; closePopover(); if (u === 'check') checkNow(); else askChoice(); }; });
   $('#fileOpen').addEventListener('change', async (e) => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    try { const d = await readFile(f); d.id = uid(); d.updated = Date.now(); await saveDoc(d); openDoc(d); toast('Design opened'); } catch { toast('This file could not be opened'); }
+    openFile(f);
   });
+  // the desktop app passes files opened from Windows (double-click on a .dkly)
+  window.decklyDesktop?.onOpenFile?.((bytes) => openFile(bytes));
+  // drop a .dkly file anywhere on the home screen
+  $('#home').addEventListener('dragover', (e) => e.preventDefault());
+  $('#home').addEventListener('drop', (e) => { const f = [...e.dataTransfer.files].find((x) => /\.(dkly|deckly)$/i.test(x.name)); if (f) { e.preventDefault(); openFile(f); } });
   document.addEventListener('keydown', (e) => { if (e.key === 'F5' && !$('#editor').classList.contains('hidden')) { e.preventDefault(); present(e.shiftKey ? state.slide : 0, hasNotes()); } });
   on((w) => {
     if (w === 'saving') $('#saveState').innerHTML = `${ic('loader')}${tr('Saving…')}`;
@@ -173,6 +178,7 @@ function fileAction(a) {
   if (a === 'new') showHome();
   if (a === 'open') $('#fileOpen').click();
   if (a === 'save') saveFile();
+  if (a === 'save-show') saveFile(true);
   if (a === 'png') exportPng();
   if (a === 'pngt') exportPng(true);
   if (a === 'download') downloadDialog(modal, closeModal, ic);
@@ -198,3 +204,18 @@ function updateNet() {
   });
 }
 const hasNotes = () => state.doc.slides.some((s) => (s.notes || '').trim());
+
+// Opens a .dkly (or older .deckly) file: keeps a copy in "Your designs", and plays it right away if it was saved that way.
+async function openFile(fileOrBytes) {
+  try {
+    const { doc, manifest } = await readFile(fileOrBytes);
+    doc.id = uid(); doc.updated = Date.now();
+    await saveDoc(doc);
+    openDoc(doc);
+    if (manifest.presentOnOpen) setTimeout(() => present(0, hasNotes()), 300);
+    else toast('Design opened');
+  } catch (e) {
+    console.error(e);
+    toast(String(e.message) === 'newer' ? 'This file was made with a newer Deckly: please update' : 'This file could not be opened');
+  }
+}

@@ -184,51 +184,7 @@ export function uploadFont(after) {
   inp.click();
 }
 
-// ======================= ANIMATIONS =======================
-export const ANIMS = [['none', 'None'], ['fade', 'Fade'], ['rise', 'Rise'], ['pop', 'Pop'], ['slide', 'Slide in'], ['drop', 'Drop'], ['blur', 'Blur in'], ['typewriter', 'Typewriter']];
-export const TRANSITIONS = [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['zoom', 'Zoom'], ['flip', 'Flip over']];
-export function animatePopover(anchor) {
-  const els = selected(); const cur = els[0]?.anim || 'none';
-  popover(anchor, `<h4>Animate when the slide appears</h4><div class="anim-grid">${ANIMS.filter(([k]) => k !== 'typewriter' || els.every((e) => e.type === 'text')).map(([k, n]) => `<button class="anim-opt ${k === cur ? 'on' : ''}" data-an="${k}"><span class="anim-demo a-${k}">Aa</span>${n}</button>`).join('')}</div>
-    <div class="range-row"><label>Delay</label><input type="range" id="anDelay" min="0" max="30" value="${Math.round((els[0]?.animDelay || 0) * 10)}"><span class="v">${(els[0]?.animDelay || 0).toFixed(1)} s</span></div>
-    <button class="btn ghost block" id="anAll">${ic('sparkles')} Animate all elements on this slide</button>`, (p) => {
-    p.querySelectorAll('[data-an]').forEach((b) => (b.onclick = () => {
-      p.querySelectorAll('[data-an]').forEach((x) => x.classList.toggle('on', x === b));
-      for (const el of selected()) el.anim = b.dataset.an === 'none' ? null : b.dataset.an;
-      commit(); emit('canvas'); toast('You will see it in Present mode');
-    }));
-    const r = p.querySelector('#anDelay');
-    r.oninput = () => { r.nextElementSibling.textContent = (r.value / 10).toFixed(1) + ' s'; for (const el of selected()) el.animDelay = r.value / 10; };
-    r.onchange = () => commit();
-    p.querySelector('#anAll').onclick = () => {
-      curSlide().elements.forEach((el, i) => { el.anim = el.anim || 'rise'; el.animDelay = Math.round(i * 0.15 * 10) / 10; });
-      commit(); emit('canvas'); closePopover(); toast('All elements animated, one after another');
-    };
-  });
-}
-export function transitionPopover(anchor) {
-  const cur = curSlide().transition || 'none';
-  popover(anchor, `<h4>Transition to this slide</h4><div class="pop-list">${TRANSITIONS.map(([k, n]) => `<button data-tr="${k}" class="${k === cur ? 'on' : ''}">${ic({ none: 'square', fade: 'blend', slide: 'move-right', zoom: 'zoom-in', flip: 'flip-horizontal-2' }[k])} ${n}</button>`).join('')}</div>
-    <div class="toggle-row"><span>Apply to all slides</span><button class="switch" id="trAll"></button></div>`, (p) => {
-    p.querySelector('#trAll').onclick = (e) => e.currentTarget.classList.toggle('on');
-    p.querySelectorAll('[data-tr]').forEach((b) => (b.onclick = () => {
-      const v = b.dataset.tr === 'none' ? null : b.dataset.tr;
-      (p.querySelector('#trAll').classList.contains('on') ? state.doc.slides : [curSlide()]).forEach((s) => (s.transition = v));
-      p.querySelectorAll('[data-tr]').forEach((x) => x.classList.toggle('on', x === b));
-      commit(); emit('canvas');
-    }));
-  });
-}
-// called by present mode on each freshly shown slide node
-export function playAnimations(node, slide) {
-  if (slide.transition) node.classList.add('tr-' + slide.transition);
-  for (const el of slide.elements) {
-    if (!el.anim || el.hidden) continue;
-    const n = node.querySelector(`[data-id="${el.id}"] > .inner`); if (!n) continue;
-    n.style.animationDelay = (el.animDelay || 0) + (slide.transition ? 0.35 : 0) + 's';
-    n.classList.add('an-' + el.anim);
-  }
-}
+// (animations: see anim.js and the Animate panel in animpanel.js)
 
 // ======================= helpers =======================
 export const fileToDataUrl = (f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });

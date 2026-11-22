@@ -5,7 +5,7 @@ import { popover, closePopover, openColorPopover, toast } from './ui.js';
 import { layer, align, removeSel, duplicate, patchNode, renderOverlay, startEditing, groupSel, ungroupSel, isOneGroup } from './editor.js';
 import { openTab } from './panels.js';
 import { t as tr, translateDom } from './i18n.js';
-import { animatePopover, transitionPopover } from './pro.js';
+import { hasAnim } from './anim.js';
 import { removeBackground } from './bgremove.js';
 
 const $ = (s) => document.querySelector(s);
@@ -31,7 +31,7 @@ function render() {
     const bg = curSlide().bg;
     h = `<div class="grp">${colorBtn('slidebg', bg.type === 'color' ? bg.value : bg.type === 'gradient' ? bg.value : `url(${bg.value}) center/cover`, 'Background colour')}<span class="ctx-label">Background</span></div>`
       + `<div class="grp">${btn('bgpanel', 'images', 'More backgrounds', false, 'Backgrounds')}</div>`
-      + `<div class="grp">${btn('transition', 'film', 'Transition', !!curSlide().transition, 'Transition')}</div>`
+      + `<div class="grp">${btn('transition', 'sparkles', 'Animate', !!curSlide().transition || curSlide().elements.some(hasAnim), 'Animate')}</div>`
       + `<div class="grp">${btn('slide-dup', 'copy-plus', 'Duplicate slide', false, 'Duplicate slide')}${btn('slide-del', 'trash-2', 'Delete slide', false, '')}</div>`
       + `<span class="ctx-label push">Tip: click an element to edit it · double-click text to type</span>`;
   } else if (els.length > 1) {
@@ -73,7 +73,7 @@ function render() {
 }
 function common(els) {
   const lock = els.every((e) => e.locked);
-  return `<div class="grp push">${btn('animate', 'sparkles', 'Animate', els.some((e) => e.anim), 'Animate')}${btn('position', 'layers', 'Position & layers', false, 'Position')}${btn('opacity', 'blend', 'Transparency')}${btn('shadowbox', 'square-stack', 'Drop shadow', els.every((e) => e.shadowBox))}</div>`
+  return `<div class="grp push">${btn('animate', 'sparkles', 'Animate', els.some(hasAnim), 'Animate')}${btn('position', 'layers', 'Position & layers', false, 'Position')}${btn('opacity', 'blend', 'Transparency')}${btn('shadowbox', 'square-stack', 'Drop shadow', els.every((e) => e.shadowBox))}</div>`
     + `<div class="grp">${btn('dup', 'copy-plus', 'Duplicate')}${btn('lock', lock ? 'lock' : 'lock-open', lock ? 'Unlock' : 'Lock', lock)}${`<button class="cb danger" data-act="del" title="Delete">${ic('trash-2')}</button>`}</div>`;
 }
 
@@ -136,8 +136,7 @@ function onClick(e) {
     case 'restorebg': set((x) => { x.src = x.origSrc; delete x.origSrc; }); toast('Original photo restored'); break;
     case 'asbg': curSlide().bg = { type: 'image', value: el.src }; removeSel(); toast('Photo set as background'); break;
     case 'position': positionPopover(b); break;
-    case 'animate': animatePopover(b); break;
-    case 'transition': transitionPopover(b); break;
+    case 'animate': case 'transition': openTab('animate'); break;
     case 'opacity': popover(b, range('Transparency', 'op', 0, 100, Math.round((el.opacity ?? 1) * 100), '%'), (p) => wireRanges(p, (k, v, live) => set((x) => (x.opacity = v / 100), live))); break;
     case 'shadowbox': { const v = !selected().every((x) => x.shadowBox); set((x) => (x.shadowBox = v)); break; }
     case 'dup': duplicate(); break;

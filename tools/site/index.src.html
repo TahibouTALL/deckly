@@ -136,6 +136,13 @@ h3{font-size:22px;letter-spacing:-.01em}
 .off-item b{display:block}
 .off-item span{color:#A9A7C9;font-size:14px}
 
+/* .dkly */
+.dkly{padding:120px 0 0}
+.dkly-card{display:grid;grid-template-columns:.8fr 1.2fr;gap:60px;align-items:center;background:var(--bg-2);border-radius:32px;padding:60px}
+.dkly-art{position:relative;display:flex;flex-direction:column;align-items:center;gap:16px}
+.dkly-art::before{content:"";position:absolute;width:320px;height:320px;border-radius:50%;background:var(--grad);opacity:.25;filter:blur(50px);top:-10px}
+.dkly-art img{position:relative;width:230px;filter:drop-shadow(0 30px 40px rgba(43,24,120,.3));animation:bob 6s ease-in-out infinite}
+.dkly-name{position:relative;font-weight:700;background:#fff;border:1px solid var(--line);padding:6px 14px;border-radius:10px;font-size:14px}
 /* compare */
 .compare{padding:120px 0}
 .table-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--line);box-shadow:0 20px 50px -30px rgba(20,20,43,.3)}
@@ -210,6 +217,7 @@ footer a:hover{color:var(--ink)}
   .row,.row.flip{grid-template-columns:1fr;gap:34px;margin-bottom:90px}
   .row.flip .txt{order:0}
   .offline .wrap{grid-template-columns:1fr}
+  .dkly-card{grid-template-columns:1fr;padding:36px 24px;gap:30px}
   .float{display:none}
 }
 @media (max-width:720px){
@@ -243,7 +251,7 @@ footer a:hover{color:var(--ink)}
 
 <section class="hero">
   <div class="wrap">
-    <a class="pill" href="#pro"><b>NOUVEAU</b><span class="pill-long">Version <span class="v-num">1.1</span> : toutes les fonctions Pro, gratuites</span><span class="pill-short">Fonctions Pro gratuites</span>{{ic:arrow-right}}</a>
+    <a class="pill" href="#animations"><b>NOUVEAU</b><span class="pill-long">Version <span class="v-num">1.2</span> : 26 animations et le fichier .dkly</span><span class="pill-short">26 animations + fichier .dkly</span>{{ic:arrow-right}}</a>
     <h1>Des présentations <span class="grad-text">magnifiques</span>,<br>même sans internet.</h1>
     <p class="lead">Deckly, c’est le plus simple des logiciels de présentation. Choisissez un modèle, glissez vos photos et vos textes, et présentez. Tout est déjà dans le logiciel.</p>
     <div class="cta-row">
@@ -290,7 +298,21 @@ footer a:hover{color:var(--ink)}
       <p class="lead">Pensé pour ceux qui n’ont pas le temps d’apprendre un logiciel. Chaque bouton fait ce qu’il dit.</p>
     </div>
 
-    <div class="row reveal">
+    <div class="row reveal" id="animations">
+      <div class="txt">
+        <span class="eyebrow">{{ic:sparkles}}Nouveau : animations</span>
+        <h3>Des animations dignes des plus grands</h3>
+        <p>26 animations d’entrée, des sorties, des effets en boucle et 10 transitions. Faites apparaître un titre lettre par lettre, révélez vos points au clic, et laissez vos éléments glisser d’une diapo à l’autre.</p>
+        <ul class="checks">
+          <li>{{ic:circle-check}}Montée, Panoramique, Néon, Album photo, Machine à écrire…</li>
+          <li>{{ic:circle-check}}Par lettre, par mot ou par ligne, au clic ou automatiquement</li>
+          <li>{{ic:circle-check}}« Déplacer et associer » : les éléments glissent entre deux diapos</li>
+        </ul>
+      </div>
+      <div class="shot-wrap"><div class="shot"><img loading="lazy" src="img/animate.jpg" width="1800" height="925" alt="Le panneau Animer de Deckly avec la grille des animations"></div></div>
+    </div>
+
+    <div class="row flip reveal">
       <div class="txt">
         <span class="eyebrow">{{ic:mouse-pointer-click}}Glisser, déposer, c’est fait</span>
         <h3>Créez en quelques clics, pas en quelques heures</h3>
@@ -304,7 +326,7 @@ footer a:hover{color:var(--ink)}
       <div class="shot-wrap"><div class="shot"><img loading="lazy" src="img/home.jpg" width="1800" height="925" alt="L’écran d’accueil de Deckly avec les modèles"></div></div>
     </div>
 
-    <div class="row flip reveal">
+    <div class="row reveal">
       <div class="txt">
         <span class="eyebrow">{{ic:gem}}Kit de marque</span>
         <h3>Votre marque, appliquée en un clic</h3>
@@ -318,7 +340,7 @@ footer a:hover{color:var(--ink)}
       <div class="shot-wrap"><div class="shot"><img loading="lazy" src="img/brand.jpg" width="1800" height="925" alt="Le kit de marque de Deckly : couleurs, polices et logos"></div></div>
     </div>
 
-    <div class="row reveal">
+    <div class="row flip reveal">
       <div class="txt">
         <span class="eyebrow">{{ic:download}}Export haute résolution</span>
         <h3>PowerPoint, PDF, PNG… jusqu’en 4K</h3>
@@ -332,7 +354,7 @@ footer a:hover{color:var(--ink)}
       <div class="shot-wrap"><div class="shot"><img loading="lazy" src="img/download.jpg" width="1800" height="925" alt="La fenêtre de téléchargement de Deckly avec les formats et la 4K"></div></div>
     </div>
 
-    <div class="row flip reveal">
+    <div class="row reveal">
       <div class="txt">
         <span class="eyebrow">{{ic:presentation}}Mode présentateur</span>
         <h3>Présentez comme un pro</h3>
@@ -384,6 +406,24 @@ footer a:hover{color:var(--ink)}
   </div>
 </section>
 
+<section class="dkly" id="dkly">
+  <div class="wrap">
+    <div class="dkly-card reveal">
+      <div class="dkly-art"><img src="img/dkly-file.png" width="256" height="256" alt="Icône d’un fichier .dkly"><span class="dkly-name">Ma présentation.dkly</span></div>
+      <div>
+        <span class="eyebrow">{{ic:file-check}}Le fichier .dkly</span>
+        <h2 style="margin:14px 0 16px">Envoyez-la.<br><span class="grad-text">Rien ne se casse.</span></h2>
+        <p class="lead">Exportée en PowerPoint, une présentation perd souvent ses animations et ses polices. Le fichier .dkly garde tout : diapos, animations, transitions, photos et polices, dans un seul fichier.</p>
+        <ul class="checks" style="margin-top:22px">
+          <li>{{ic:circle-check}}Un double-clic l’ouvre dans Deckly, même sans internet</li>
+          <li>{{ic:circle-check}}Option « diaporama » : il s’ouvre directement en mode Présenter</li>
+          <li>{{ic:circle-check}}Les photos et vos propres polices voyagent avec lui</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="compare">
   <div class="wrap">
     <div class="sec-head reveal">
@@ -400,6 +440,7 @@ footer a:hover{color:var(--ink)}
           <tr><td>Modèles, photos et icônes inclus</td><td class="us yes">{{ic:check}}</td><td class="yes">{{ic:check}}</td><td>Peu</td></tr>
           <tr><td>Suppression d’arrière-plan</td><td class="us yes">{{ic:check}}</td><td>Payant</td><td>Limitée</td></tr>
           <tr><td>Kit de marque</td><td class="us yes">{{ic:check}}</td><td>Payant</td><td class="no">{{ic:x}}</td></tr>
+          <tr><td>Animations intactes quand on partage le fichier</td><td class="us yes">{{ic:check}}</td><td>Souvent perdues à l’export</td><td class="yes">{{ic:check}}</td></tr>
           <tr><td>Export PowerPoint modifiable</td><td class="us yes">{{ic:check}}</td><td class="yes">{{ic:check}}</td><td class="yes">{{ic:check}}</td></tr>
           <tr><td>Aucun compte nécessaire</td><td class="us yes">{{ic:check}}</td><td class="no">{{ic:x}}</td><td class="yes">{{ic:check}}</td></tr>
         </tbody>
@@ -430,6 +471,7 @@ footer a:hover{color:var(--ink)}
       <details><summary>Windows affiche « Windows a protégé votre ordinateur ». Que faire ?{{ic:plus}}</summary><p>C’est normal pour un nouveau logiciel qui n’est pas encore connu de Windows. Cliquez sur « Informations complémentaires », puis sur « Exécuter quand même ».</p></details>
       <details><summary>Est-ce que ça marche vraiment sans internet ?{{ic:plus}}</summary><p>Oui : les modèles, photos, icônes, stickers, logos, polices et l’IA de suppression d’arrière-plan sont dans le logiciel. Internet sert seulement à chercher plus de photos et d’icônes, et à recevoir les mises à jour.</p></details>
       <details><summary>Puis-je ouvrir mes présentations dans PowerPoint ?{{ic:plus}}</summary><p>Oui. Téléchargez votre création en PowerPoint (.pptx) : le texte reste modifiable, et vos notes de l’orateur sont gardées.</p></details>
+      <details><summary>Mes animations restent-elles quand j’envoie ma présentation ?{{ic:plus}}</summary><p>Oui, si vous l’enregistrez en fichier .dkly (Fichier → Enregistrer en fichier Deckly). Il garde les animations, les transitions, les photos et les polices, et s’ouvre d’un double-clic dans Deckly. L’export PowerPoint reste possible, mais PowerPoint ne connaît pas toutes les animations de Deckly.</p></details>
       <details><summary>Comment se font les mises à jour ?{{ic:plus}}</summary><p>Au premier lancement, vous choisissez : automatiquement (recommandé) ou en vous demandant à chaque fois. Deckly cherche les nouveautés seulement quand vous êtes connecté.</p></details>
       <details><summary>Où sont enregistrées mes créations ?{{ic:plus}}</summary><p>Sur votre ordinateur, automatiquement. Vous pouvez aussi les enregistrer comme fichier .deckly pour les sauvegarder ou les envoyer.</p></details>
       <details><summary>Et sur Mac ?{{ic:plus}}</summary><p>Deckly est pour l’instant disponible sur Windows 10 et 11 (64 bits).</p></details>

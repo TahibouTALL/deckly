@@ -31,7 +31,7 @@
   </div>
   <div class="home-section">
     <div class="row-between"><h2>Your designs</h2>
-      <button class="btn ghost" id="openFileHome"><i data-ic="folder-open"></i>Open a .deckly file</button></div>
+      <button class="btn ghost" id="openFileHome"><i data-ic="folder-open"></i>Open a Deckly file (.dkly)</button></div>
     <div class="chips folder-bar" id="folderBar"></div>
     <div class="recent-grid" id="recentGrid"></div>
   </div>
@@ -46,7 +46,8 @@
       <div class="menu" id="fileMenu">
         <button data-act="new"><i data-ic="file-plus"></i>New design</button>
         <button data-act="open"><i data-ic="folder-open"></i>Open file…</button>
-        <button data-act="save"><i data-ic="save"></i>Save as file (.deckly)</button>
+        <button data-act="save"><i data-ic="save"></i>Save as a Deckly file (.dkly)</button>
+        <button data-act="save-show"><i data-ic="presentation"></i>Save as a slideshow (.dkly, opens in Present mode)</button>
         <button data-act="resize"><i data-ic="scaling"></i>Magic resize…</button>
         <button data-act="versions"><i data-ic="history"></i>Version history…</button>
         <button data-act="save-template"><i data-ic="bookmark-plus"></i>Save as my template…</button>
@@ -124,7 +125,7 @@
 <div class="popover hidden" id="popover"></div>
 <div class="toast" id="toast"></div>
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
-<input type="file" id="fileOpen" accept=".deckly,application/json" hidden>
+<input type="file" id="fileOpen" accept=".dkly,.deckly" hidden>
 <input type="file" id="fileUpload" accept="image/*" multiple hidden>
 
 <script src="vendor/html-to-image.js"></script>

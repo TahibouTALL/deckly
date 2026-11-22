@@ -169,7 +169,7 @@ export const isOneGroup = (els) => els.length > 1 && els[0].group && els.every((
 // copies of grouped elements form new groups of their own
 function regroup(copies) {
   const map = {};
-  for (const c of copies) if (c.group) c.group = map[c.group] ||= 'g' + uid();
+  for (const c of copies) { delete c.mid; if (c.group) c.group = map[c.group] ||= 'g' + uid(); }
   return copies;
 }
 

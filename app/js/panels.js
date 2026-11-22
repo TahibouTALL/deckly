@@ -7,12 +7,14 @@ import { miniSlide } from './render.js';
 import { toast, openColorPopover } from './ui.js';
 import { t as tr, translateDom } from './i18n.js';
 import { brandPanel, uploadFont, userTemplates, deleteTemplate } from './pro.js';
+import { animatePanel } from './animpanel.js';
+import { on } from './store.js';
 
 const $ = (s) => document.querySelector(s);
 const TABS = [
   ['design', 'layout-template', 'Design'], ['brand', 'gem', 'Brand'], ['elements', 'shapes', 'Elements'], ['text', 'type', 'Text'],
   ['photos', 'image', 'Photos'], ['icons', 'smile-plus', 'Icons'], ['stickers', 'sticker', 'Stickers'],
-  ['logos', 'badge-check', 'Logos'], ['uploads', 'cloud-upload', 'Uploads'], ['background', 'paint-bucket', 'Background'],
+  ['logos', 'badge-check', 'Logos'], ['uploads', 'cloud-upload', 'Uploads'], ['background', 'paint-bucket', 'Background'], ['animate', 'sparkles', 'Animate'],
 ];
 let tab = 'design', query = '', sub = null;
 export const onlineOk = () => state.online && state.onlineEnabled;
@@ -38,6 +40,8 @@ export function initPanels() {
   document.addEventListener('deckly-drop', (e) => addItem(e.detail.item, { x: e.detail.x, y: e.detail.y }));
   document.addEventListener('deckly-files', (e) => uploadFiles(e.detail.files, e.detail.x != null ? { x: e.detail.x, y: e.detail.y } : null));
   document.addEventListener('deckly-templates', () => { if (tab === 'design') renderPanel(); });
+  // the Animate panel follows the selection
+  on((w) => { if (tab === 'animate' && ['sel', 'slide', 'all', 'history'].includes(w) && !document.querySelector('#panelBody input[type=range]:active')) renderPanel(); });
   document.addEventListener('deckly-add-text', () => addItem({ k: 'text', preset: 'body' }));
   document.addEventListener('packs', () => { if (['stickers', 'logos', 'elements'].includes(tab)) renderPanel(); });
   $('#fileUpload').addEventListener('change', (e) => { uploadFiles([...e.target.files]); e.target.value = ''; });
@@ -49,9 +53,9 @@ export function openTab(id, subId = null) {
   $('#panelSearch').value = ''; $('#panelSearch').parentElement.classList.remove('has');
   $('#panel').classList.remove('collapsed');
   document.querySelectorAll('#rail button').forEach((b) => b.classList.toggle('active', b.dataset.tab === id));
-  const ph = { brand: 'Search', design: 'Search templates', elements: 'Search shapes', text: 'Search fonts', photos: 'Search photos', icons: 'Search 2,400+ icons', stickers: 'Search stickers', logos: 'Search brand logos', uploads: 'Search your uploads', background: 'Search colours' };
+  const ph = { animate: 'Search', brand: 'Search', design: 'Search templates', elements: 'Search shapes', text: 'Search fonts', photos: 'Search photos', icons: 'Search 2,400+ icons', stickers: 'Search stickers', logos: 'Search brand logos', uploads: 'Search your uploads', background: 'Search colours' };
   $('#panelSearch').placeholder = tr(ph[id]);
-  $('#panelSearch').parentElement.style.display = ['uploads', 'background', 'brand'].includes(id) ? 'none' : '';
+  $('#panelSearch').parentElement.style.display = ['uploads', 'background', 'brand', 'animate'].includes(id) ? 'none' : '';
   renderPanel();
 }
 
@@ -73,7 +77,7 @@ export function renderPanel() {
   const body = $('#panelBody'); body.innerHTML = ''; body.scrollTop = 0;
   if (!state.doc) return;
   const q = query.toLowerCase();
-  ({ design, brand: (b) => brandPanel(b, addItem), elements, text, photos, icons, stickers, logos, uploads, background })[tab](body, q);
+  ({ design, animate: (b) => animatePanel(b), brand: (b) => brandPanel(b, addItem), elements, text, photos, icons, stickers, logos, uploads, background })[tab](body, q);
   translateDom(body);
 }
 
