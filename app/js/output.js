@@ -4,6 +4,7 @@ import { slideNode, elementNode } from './render.js';
 import { SHAPES } from './assets.js';
 import { toast } from './ui.js';
 import { t as tr } from './i18n.js';
+import { playAnimations } from './pro.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -26,6 +27,7 @@ function showP() {
   st.style.width = D.w * s + 'px'; st.style.height = D.h * s + 'px';
   const n = slideNode(D.slides[pi], D); n.style.transform = `scale(${s})`;
   st.innerHTML = ''; st.appendChild(n);
+  playAnimations(n, D.slides[pi]);
   $('#pCount').textContent = `${pi + 1} / ${D.slides.length}`;
 }
 function step(d) { const n = pi + d; if (n < 0) return; if (n >= state.doc.slides.length) { exitP(); return; } pi = n; showP(); }
@@ -43,11 +45,12 @@ function exitP() {
 }
 
 // ---------- rendering slides to images ----------
-async function renderPng(slide, scale = 1) {
+async function renderPng(slide, scale = 1, transparent = false) {
   const D = state.doc;
   const host = document.createElement('div');
   host.style.cssText = `position:fixed;left:-${D.w + 100}px;top:0;width:${D.w}px;height:${D.h}px;`;
-  const n = slideNode(slide, D); host.appendChild(n); document.body.appendChild(host);
+  const n = slideNode(slide, D); if (transparent) n.style.background = 'transparent';
+  host.appendChild(n); document.body.appendChild(host);
   await document.fonts.ready;
   await Promise.all([...n.querySelectorAll('image')].map((im) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = im.getAttribute('href'); })));
   try { return await htmlToImage.toPng(n, { width: D.w, height: D.h, pixelRatio: scale, cacheBust: false }); }
@@ -56,9 +59,9 @@ async function renderPng(slide, scale = 1) {
 const fname = (ext) => (state.doc.title || tr('presentation')).replace(/[\\/:*?"<>|]+/g, '').trim() + '.' + ext;
 function download(url, name) { const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
 
-export async function exportPng() {
+export async function exportPng(transparent = false) {
   toast('Preparing image…');
-  try { download(await renderPng(state.doc.slides[state.slide], 1), fname('png').replace('.png', ` - ${tr('slide')} ${state.slide + 1}.png`)); }
+  try { download(await renderPng(state.doc.slides[state.slide], 1, transparent), fname('png').replace('.png', ` - ${tr('slide')} ${state.slide + 1}.png`)); }
   catch (e) { console.error(e); toast('Could not create the image'); }
 }
 export async function exportPdf() {

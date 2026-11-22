@@ -287,3 +287,62 @@ kbd{background:var(--surface-2);border:1px solid var(--line);border-bottom-width
 .upd-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-2);flex:none;margin-top:1px;background:#fff}
 .upd-opt.on .upd-radio{border:6px solid var(--accent)}
 .upd-rec{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--ok);padding:2px 7px;border-radius:99px;margin-left:4px}
+
+/* ===== Pro features ===== */
+.brand-sw{aspect-ratio:1;border-radius:50%;border:1px solid rgba(0,0,0,.1);position:relative;cursor:pointer}
+.brand-sw button{position:absolute;right:-4px;top:-4px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:var(--shadow-1);display:none;align-items:center;justify-content:center;color:var(--text-2)}
+.brand-sw button .ic{width:10px;height:10px}
+.brand-sw:hover button{display:flex}
+.add-sw{display:flex;align-items:center;justify-content:center;border:2px dashed var(--line-2);background:#fff;color:var(--text-2)}
+.add-sw .ic{width:14px;height:14px}
+.brand-font{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0}
+.brand-font span{font-size:13px;color:var(--text-2)}
+.brand-font select{flex:1;max-width:190px;height:34px;border:1px solid var(--line);border-radius:8px;padding:0 8px;background:#fff}
+.tile-x{position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:var(--shadow-1);display:none;align-items:center;justify-content:center}
+.tile-x .ic{width:11px;height:11px}
+.tile:hover .tile-x{display:flex}
+.modal-card h3{display:flex;align-items:center;gap:8px}
+.resize-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.resize-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border:2px solid var(--line);border-radius:12px;font-size:12px;text-align:center}
+.resize-opt:hover{border-color:var(--line-2)}
+.resize-opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.resize-opt.cur small::after{content:" •"}
+.resize-opt .shape{border:2px solid var(--accent);border-radius:4px;background:var(--accent-soft);margin-bottom:4px}
+.resize-opt small{color:var(--text-3)}
+.custom-size{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.custom-size span{flex:1;color:var(--text-2)}
+.custom-size input{width:84px;height:34px;border:1px solid var(--line);border-radius:8px;padding:0 8px}
+.versions{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}
+.ver-row{display:flex;align-items:center;gap:12px;padding:8px;border:1px solid var(--line);border-radius:12px}
+.ver-thumb{border-radius:6px;overflow:hidden;flex:none;box-shadow:var(--shadow-1)}
+.ver-meta{flex:1;display:flex;flex-direction:column;gap:2px}
+.ver-meta small{color:var(--text-3)}
+.anim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.anim-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:10px;border:1.5px solid var(--line);font-size:11px;font-weight:600}
+.anim-opt.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+.anim-demo{font-weight:800;font-size:16px;display:inline-block}
+.anim-opt:hover .anim-demo{animation-duration:.7s;animation-fill-mode:both}
+.anim-opt:hover .a-fade{animation-name:anFade}.anim-opt:hover .a-rise{animation-name:anRise}.anim-opt:hover .a-pop{animation-name:anPop}
+.anim-opt:hover .a-slide{animation-name:anSlide}.anim-opt:hover .a-drop{animation-name:anDrop}.anim-opt:hover .a-blur{animation-name:anBlur}.anim-opt:hover .a-typewriter{animation-name:anType}
+
+/* element entrances (present mode) */
+.an-fade,.an-rise,.an-pop,.an-slide,.an-drop,.an-blur,.an-typewriter{animation-duration:.8s;animation-fill-mode:both;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+.an-fade{animation-name:anFade}.an-rise{animation-name:anRise}.an-pop{animation-name:anPop;animation-timing-function:cubic-bezier(.3,1.6,.5,1)}
+.an-slide{animation-name:anSlide}.an-drop{animation-name:anDrop;animation-timing-function:cubic-bezier(.3,1.5,.5,1)}.an-blur{animation-name:anBlur}
+.an-typewriter{animation-name:anType;animation-duration:1.4s;animation-timing-function:steps(24,end)}
+@keyframes anFade{from{opacity:0}}
+@keyframes anRise{from{opacity:0;transform:translateY(40px)}}
+@keyframes anPop{from{opacity:0;transform:scale(.6)}}
+@keyframes anSlide{from{opacity:0;transform:translateX(-80px)}}
+@keyframes anDrop{from{opacity:0;transform:translateY(-60px)}}
+@keyframes anBlur{from{opacity:0;filter:blur(18px)}}
+@keyframes anType{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+/* slide transitions (present mode) */
+.present-stage .slide-render.tr-fade{animation:trFade .6s ease both}
+.present-stage .slide-render.tr-slide{animation:trSlide .6s cubic-bezier(.2,.8,.2,1) both}
+.present-stage .slide-render.tr-zoom{animation:trZoom .6s cubic-bezier(.2,.8,.2,1) both}
+.present-stage .slide-render.tr-flip{animation:trFlip .7s ease both;backface-visibility:hidden}
+@keyframes trFade{from{opacity:0}}
+@keyframes trSlide{from{translate:100% 0}}
+@keyframes trZoom{from{opacity:0;scale:.85}}
+@keyframes trFlip{from{opacity:0;rotate:y 90deg}}

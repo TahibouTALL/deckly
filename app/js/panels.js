@@ -6,10 +6,11 @@ import { addElement, startEditing } from './editor.js';
 import { miniSlide } from './render.js';
 import { toast, openColorPopover } from './ui.js';
 import { t as tr, translateDom } from './i18n.js';
+import { brandPanel, uploadFont } from './pro.js';
 
 const $ = (s) => document.querySelector(s);
 const TABS = [
-  ['design', 'layout-template', 'Design'], ['elements', 'shapes', 'Elements'], ['text', 'type', 'Text'],
+  ['design', 'layout-template', 'Design'], ['brand', 'gem', 'Brand'], ['elements', 'shapes', 'Elements'], ['text', 'type', 'Text'],
   ['photos', 'image', 'Photos'], ['icons', 'smile-plus', 'Icons'], ['stickers', 'sticker', 'Stickers'],
   ['logos', 'badge-check', 'Logos'], ['uploads', 'cloud-upload', 'Uploads'], ['background', 'paint-bucket', 'Background'],
 ];
@@ -47,9 +48,9 @@ export function openTab(id, subId = null) {
   $('#panelSearch').value = ''; $('#panelSearch').parentElement.classList.remove('has');
   $('#panel').classList.remove('collapsed');
   document.querySelectorAll('#rail button').forEach((b) => b.classList.toggle('active', b.dataset.tab === id));
-  const ph = { design: 'Search templates', elements: 'Search shapes', text: 'Search fonts', photos: 'Search photos', icons: 'Search 2,400+ icons', stickers: 'Search stickers', logos: 'Search brand logos', uploads: 'Search your uploads', background: 'Search colours' };
+  const ph = { brand: 'Search', design: 'Search templates', elements: 'Search shapes', text: 'Search fonts', photos: 'Search photos', icons: 'Search 2,400+ icons', stickers: 'Search stickers', logos: 'Search brand logos', uploads: 'Search your uploads', background: 'Search colours' };
   $('#panelSearch').placeholder = tr(ph[id]);
-  $('#panelSearch').parentElement.style.display = ['uploads', 'background'].includes(id) ? 'none' : '';
+  $('#panelSearch').parentElement.style.display = ['uploads', 'background', 'brand'].includes(id) ? 'none' : '';
   renderPanel();
 }
 
@@ -71,7 +72,7 @@ export function renderPanel() {
   const body = $('#panelBody'); body.innerHTML = ''; body.scrollTop = 0;
   if (!state.doc) return;
   const q = query.toLowerCase();
-  ({ design, elements, text, photos, icons, stickers, logos, uploads, background })[tab](body, q);
+  ({ design, brand: (b) => brandPanel(b, addItem), elements, text, photos, icons, stickers, logos, uploads, background })[tab](body, q);
   translateDom(body);
 }
 
@@ -154,7 +155,8 @@ function text(body, q) {
       + sec('Font combinations'));
     body.insertAdjacentHTML('beforeend', FONT_COMBOS.map(([a, b, t1, t2], i) => `<button class="combo" ${item({ k: 'combo', i })}><div style="font:700 26px '${a}'">${t1}</div><div style="font:400 14px '${b}';color:#5B5E73;margin-top:6px">${t2}</div></button>`).join(''));
   }
-  body.insertAdjacentHTML('beforeend', sec('Fonts on this computer'));
+  body.insertAdjacentHTML('beforeend', sec('Fonts on this computer', '<button id="fontUp">+ Upload a font</button>'));
+  body.querySelector('#fontUp').onclick = () => uploadFont(renderPanel);
   body.insertAdjacentHTML('beforeend', packs.fonts.filter((f) => !q || f.toLowerCase().includes(q)).map((f) => `<button class="text-preset" ${item({ k: 'text', preset: 'body', font: f })}><div style="font:400 20px '${f}'">${f}</div></button>`).join(''));
 }
 

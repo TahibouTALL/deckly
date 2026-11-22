@@ -11,6 +11,7 @@ import { present, exportPng, exportPdf, exportPptx, saveFile, readFile } from '.
 import { toast, shortcutsModal, popover, closePopover } from './ui.js';
 import { initUpdates, askChoice, checkNow } from './updates.js';
 import { t as tr, translateDom, lang, LANGS, setLang } from './i18n.js';
+import { loadBrand, resizeDialog, versionsDialog, snapshotVersion } from './pro.js';
 
 const $ = (s) => document.querySelector(s);
 const SIZES = [
@@ -19,6 +20,7 @@ const SIZES = [
 ];
 
 await loadPacks();
+await loadBrand();
 hydrateIcons();
 translateDom(document.body);
 document.querySelectorAll('.lang-btn').forEach((b) => (b.onclick = (e) => langMenu(e.currentTarget)));
@@ -93,6 +95,7 @@ function openDoc(doc, isNew = false) {
   $('#titleInput').value = doc.title;
   history.replaceState(null, '', '#' + doc.id);
   if (isNew) saveDoc(doc);
+  setTimeout(() => snapshotVersion(true), 1500);
   openTab(isNew && doc.slides.length === 1 && !doc.slides[0].elements.length ? 'design' : 'elements');
   emit('all');
   requestAnimationFrame(fit);
@@ -112,6 +115,7 @@ function wireTopbar() {
   $('#downloadBtn').onclick = (e) => popover(e.currentTarget, `<h4>Download</h4><div class="pop-list">
       <button data-d="pptx">${ic('presentation')} PowerPoint (.pptx)<small style="margin-left:auto;color:var(--text-3)">editable text</small></button>
       <button data-d="pdf">${ic('file-text')} PDF — all slides</button><button data-d="png">${ic('image')} PNG — this slide</button>
+      <button data-d="pngt">${ic('image-off')} PNG — transparent background</button>
       <button data-d="save">${ic('save')} Deckly file (.deckly)</button></div>`, (p) => { p.onclick = (ev) => { const d = ev.target.closest('[data-d]')?.dataset.d; if (d) { closePopover(); fileAction(d); } }; });
   $('#zoomVal').title = tr('Fit to screen');
   $('#zoomIn').onclick = () => setZoom(Math.min(4, state.scale * 1.2));
@@ -128,7 +132,7 @@ function wireTopbar() {
   document.addEventListener('keydown', (e) => { if (e.key === 'F5' && !$('#editor').classList.contains('hidden')) { e.preventDefault(); present(e.shiftKey ? state.slide : 0); } });
   on((w) => {
     if (w === 'saving') $('#saveState').innerHTML = `${ic('loader')}${tr('Saving…')}`;
-    if (w === 'saved') $('#saveState').innerHTML = `${ic('cloud-check')}${tr('Saved')}`;
+    if (w === 'saved') { $('#saveState').innerHTML = `${ic('cloud-check')}${tr('Saved')}`; snapshotVersion(); }
     if (w === 'savefail') $('#saveState').innerHTML = `${ic('triangle-alert')}${tr('Not saved')}`;
     $('#undoBtn').disabled = !canUndo(); $('#redoBtn').disabled = !canRedo();
   });
@@ -144,6 +148,9 @@ function fileAction(a) {
   if (a === 'open') $('#fileOpen').click();
   if (a === 'save') saveFile();
   if (a === 'png') exportPng();
+  if (a === 'pngt') exportPng(true);
+  if (a === 'resize') resizeDialog(openDoc);
+  if (a === 'versions') versionsDialog();
   if (a === 'pdf') exportPdf();
   if (a === 'pptx') exportPptx();
   if (a === 'check-updates') checkNow();

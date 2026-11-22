@@ -31,18 +31,19 @@ export function closePopover() {
 }
 
 const recent = [];
+export const brandSwatches = { list: [] };
 export function openColorPopover(anchor, value, onPick, onDone, opts = {}) {
   const sw = (c) => `<button class="sw" style="background:${c}" data-c="${c}" title="${c}"></button>`;
-  const html = (recent.length ? `<h4>Recently used</h4><div class="swatches">${recent.map(sw).join('')}</div>` : '')
+  const html = (brandSwatches.list.length ? `<h4>Brand colours</h4><div class="swatches">${brandSwatches.list.map(sw).join('')}</div>` : '') + (recent.length ? `<h4>Recently used</h4><div class="swatches">${recent.map(sw).join('')}</div>` : '')
     + `<h4 style="margin-top:10px">Colours</h4><div class="swatches">${PALETTE.map(sw).join('')}</div>`
     + (opts.gradients ? `<h4 style="margin-top:10px">Gradients</h4><div class="swatches">${GRADIENTS.map((g) => `<button class="sw grad" style="background:${g}" data-c="${g}"></button>`).join('')}</div>` : '')
     + `<div class="custom-color"><input type="color" value="${/^#[0-9a-f]{6}$/i.test(value) ? value : '#6C4CF5'}"><input type="text" value="${/^#/.test(value) ? value : ''}" placeholder="#RRGGBB"></div>`;
   popover(anchor, html, (p) => {
-    const pick = (c, final) => { onPick(c); if (final) { remember(c); onDone?.(); } };
+    const pick = (c, final) => { onPick(c); if (final) { remember(c); onDone?.(); opts.onFinal?.(c); } };
     p.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => pick(b.dataset.c, true)));
     const ci = p.querySelector('input[type=color]'), ti = p.querySelector('input[type=text]');
     ci.oninput = () => { ti.value = ci.value; pick(ci.value, false); };
-    ci.onchange = () => { remember(ci.value); onDone?.(); };
+    ci.onchange = () => { remember(ci.value); onDone?.(); opts.onFinal?.(ci.value); };
     ti.onchange = () => { if (/^#[0-9a-f]{6}$/i.test(ti.value)) pick(ti.value, true); };
   });
 }

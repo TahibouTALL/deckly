@@ -53,6 +53,16 @@ The interface opens in **French**. People can switch to English (and back) with 
 - **Download**: PowerPoint `.pptx` (text stays editable), PDF, PNG, and `.deckly` project files.
 - **Online / Offline switch** (top-right pill): when it's on and you're online, searching Photos also searches Wikimedia Commons and searching Icons also searches Iconify. Web photos you use are downloaded into the design and your library, so they keep working offline.
 
+### "Pro" features (paid in other tools, free here)
+
+- **Brand kit** (Marque tab): brand colours (also shown first in every colour picker), heading/body fonts applied to a whole design in one click, brand logos.
+- **Magic resize** (File menu): change a design's format (square post, story, YouTube thumbnail, A4…). Every element is scaled and re-centred, as a copy or in place.
+- **Background remover** (photo toolbar): fully offline AI (U²-Net `u2netp`, Apache-2.0, run with ONNX Runtime Web, MIT). "Restore original" brings the photo back.
+- **Animations** (Animate button) and **slide transitions** (Transition button, nothing selected), played in Present mode.
+- **Transparent PNG** export.
+- **Version history** (File menu): a copy every 5 minutes of editing, the last 30 kept, restore in one click.
+- **Your own fonts**: Text tab → "+ Upload a font" (.ttf, .otf, .woff, .woff2).
+
 ## Built-in library (`app/assets/`)
 
 | Pack | Count | Licence |

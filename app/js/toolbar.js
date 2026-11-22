@@ -5,6 +5,8 @@ import { popover, closePopover, openColorPopover, toast } from './ui.js';
 import { layer, align, removeSel, duplicate, patchNode, renderOverlay, startEditing } from './editor.js';
 import { openTab } from './panels.js';
 import { t as tr, translateDom } from './i18n.js';
+import { animatePopover, transitionPopover } from './pro.js';
+import { removeBackground } from './bgremove.js';
 
 const $ = (s) => document.querySelector(s);
 let bar;
@@ -29,6 +31,7 @@ function render() {
     const bg = curSlide().bg;
     h = `<div class="grp">${colorBtn('slidebg', bg.type === 'color' ? bg.value : bg.type === 'gradient' ? bg.value : `url(${bg.value}) center/cover`, 'Background colour')}<span class="ctx-label">Background</span></div>`
       + `<div class="grp">${btn('bgpanel', 'images', 'More backgrounds', false, 'Backgrounds')}</div>`
+      + `<div class="grp">${btn('transition', 'film', 'Transition', !!curSlide().transition, 'Transition')}</div>`
       + `<div class="grp">${btn('slide-dup', 'copy-plus', 'Duplicate slide', false, 'Duplicate slide')}${btn('slide-del', 'trash-2', 'Delete slide', false, '')}</div>`
       + `<span class="ctx-label push">Tip: click an element to edit it · double-click text to type</span>`;
   } else if (els.length > 1) {
@@ -58,7 +61,7 @@ function render() {
         + `<div class="grp"><span class="ctx-label">Line weight</span><div class="num"><button data-act="isw-">${ic('minus')}</button><input data-in="isw" value="${el.sw}"><button data-act="isw+">${ic('plus')}</button></div></div>` + common(els);
     } else if (el.type === 'image') {
       h = `<div class="grp">${btn('replace', 'replace', 'Replace photo', false, 'Replace')}${btn('filters', 'sliders-horizontal', 'Adjust', false, 'Adjust')}${btn('frame', 'crop', 'Frame shape', false, 'Frame')}${btn('focus', 'scan', 'Crop focus', false, '')}</div>`
-        + `<div class="grp">${btn('flip', 'flip-horizontal-2', 'Flip', el.flipX)}${btn('asbg', 'wallpaper', 'Set as background', false, 'Set as background')}</div>`
+        + `<div class="grp">${el.origSrc ? btn('restorebg', 'undo-2', 'Restore original', false, '') : btn('removebg', 'eraser', 'Remove background', false, 'Remove background')}${btn('flip', 'flip-horizontal-2', 'Flip', el.flipX)}${btn('asbg', 'wallpaper', 'Set as background', false, 'Set as background')}</div>`
         + (el.credit ? `<span class="ctx-label" title="${el.credit.replace(/"/g, '')}">${ic('info')}</span>` : '') + common(els);
     } else {
       h = `<span class="ctx-label">${{ sticker: 'Sticker', logo: 'Logo', svg: 'Icon' }[el.type] || 'Element'}</span>` + common(els);
@@ -69,7 +72,7 @@ function render() {
 }
 function common(els) {
   const lock = els.every((e) => e.locked);
-  return `<div class="grp push">${btn('position', 'layers', 'Position & layers', false, 'Position')}${btn('opacity', 'blend', 'Transparency')}${btn('shadowbox', 'square-stack', 'Drop shadow', els.every((e) => e.shadowBox))}</div>`
+  return `<div class="grp push">${btn('animate', 'sparkles', 'Animate', els.some((e) => e.anim), 'Animate')}${btn('position', 'layers', 'Position & layers', false, 'Position')}${btn('opacity', 'blend', 'Transparency')}${btn('shadowbox', 'square-stack', 'Drop shadow', els.every((e) => e.shadowBox))}</div>`
     + `<div class="grp">${btn('dup', 'copy-plus', 'Duplicate')}${btn('lock', lock ? 'lock' : 'lock-open', lock ? 'Unlock' : 'Lock', lock)}${`<button class="cb danger" data-act="del" title="Delete">${ic('trash-2')}</button>`}</div>`;
 }
 
@@ -128,8 +131,12 @@ function onClick(e) {
     case 'focus': popover(b, '<h4>Which part of the photo to keep</h4>' + range('Left ↔ right', 'fx', 0, 100, el.focusX ?? 50) + range('Top ↕ bottom', 'fy', 0, 100, el.focusY ?? 50),
       (p) => wireRanges(p, (k, v, live) => set((x) => { if (k === 'fx') x.focusX = v; else x.focusY = v; }, live))); break;
     case 'flip': set((x) => (x.flipX = !x.flipX)); break;
+    case 'removebg': doRemoveBg(el, b); break;
+    case 'restorebg': set((x) => { x.src = x.origSrc; delete x.origSrc; }); toast('Original photo restored'); break;
     case 'asbg': curSlide().bg = { type: 'image', value: el.src }; removeSel(); toast('Photo set as background'); break;
     case 'position': positionPopover(b); break;
+    case 'animate': animatePopover(b); break;
+    case 'transition': transitionPopover(b); break;
     case 'opacity': popover(b, range('Transparency', 'op', 0, 100, Math.round((el.opacity ?? 1) * 100), '%'), (p) => wireRanges(p, (k, v, live) => set((x) => (x.opacity = v / 100), live))); break;
     case 'shadowbox': { const v = !selected().every((x) => x.shadowBox); set((x) => (x.shadowBox = v)); break; }
     case 'dup': duplicate(); break;
@@ -164,7 +171,7 @@ function effectsPopover(b, el) {
 }
 function filtersPopover(b, el) {
   const f = el.filters || {};
-  const presets = [['Original', {}], ['B&W', { grayscale: 100, contrast: 110 }], ['Warm', { sepia: 30, saturate: 120 }], ['Cool', { hue: 190, saturate: 80, sepia: 20 }], ['Vivid', { saturate: 150, contrast: 110 }], ['Fade', { contrast: 80, brightness: 110, saturate: 80 }]];
+  const presets = [['Original', {}], ['B&W', { grayscale: 100, contrast: 110 }], ['Warm', { sepia: 30, saturate: 120 }], ['Cool', { hue: 190, saturate: 80, sepia: 20 }], ['Vivid', { saturate: 150, contrast: 110 }], ['Faded', { contrast: 80, brightness: 110, saturate: 80 }]];
   popover(b, `<h4>Quick looks</h4><div class="chips">${presets.map(([n], i) => `<button class="chip" data-p="${i}">${n}</button>`).join('')}</div>`
     + range('Brightness', 'brightness', 30, 170, f.brightness ?? 100) + range('Contrast', 'contrast', 30, 170, f.contrast ?? 100) + range('Saturation', 'saturate', 0, 200, f.saturate ?? 100)
     + range('Black & white', 'grayscale', 0, 100, f.grayscale ?? 0) + range('Blur', 'blur', 0, 20, f.blur ?? 0), (p) => {
@@ -192,4 +199,13 @@ function distribute(axis) {
   let pos = first[axis];
   for (const e of els) { e[axis] = pos; pos += e[size] + gap; }
   commit(); emit('canvas');
+}
+
+async function doRemoveBg(el, b) {
+  if (el.placeholder) return;
+  b.disabled = true; const old = b.innerHTML; b.innerHTML = ic('loader') + tr('Removing the background…');
+  try {
+    const out = await removeBackground(el.src);
+    el.origSrc = el.src; el.src = out; patchNode(el); commit(); emit('canvas'); toast('Background removed');
+  } catch (e) { console.error(e); toast('Could not remove the background'); b.innerHTML = old; b.disabled = false; }
 }
