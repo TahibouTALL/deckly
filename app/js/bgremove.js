@@ -4,7 +4,7 @@ let session = null, ortLoaded = null;
 function loadOrt() {
   if (!ortLoaded) ortLoaded = new Promise((res, rej) => {
     if (window.ort) return res(window.ort);
-    const s = document.createElement('script'); s.src = 'vendor/ort/ort.min.js';
+    const s = document.createElement('script'); s.src = 'vendor/ort/ort.wasm.min.js';
     s.onload = () => res(window.ort); s.onerror = () => rej(new Error('ONNX Runtime missing'));
     document.head.appendChild(s);
   });
