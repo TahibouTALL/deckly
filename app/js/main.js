@@ -7,11 +7,12 @@ import { initToolbar } from './toolbar.js';
 import { initSlides } from './slides.js';
 import { TEMPLATES } from './templates.js';
 import { miniSlide } from './render.js';
-import { present, exportPng, exportPdf, exportPptx, saveFile, readFile } from './output.js';
-import { toast, shortcutsModal, popover, closePopover } from './ui.js';
+import { present, exportPng, exportPdf, exportPptx, saveFile, readFile, downloadDialog } from './output.js';
+import { toast, shortcutsModal, popover, closePopover, modal, closeModal } from './ui.js';
 import { initUpdates, askChoice, checkNow } from './updates.js';
 import { t as tr, translateDom, lang, LANGS, setLang } from './i18n.js';
-import { loadBrand, resizeDialog, versionsDialog, snapshotVersion } from './pro.js';
+import { loadBrand, resizeDialog, versionsDialog, snapshotVersion, userTemplates, saveAsTemplate, getFolders, addFolder, deleteFolder, askName } from './pro.js';
+let homeFolder = null;
 
 const $ = (s) => document.querySelector(s);
 const SIZES = [
@@ -48,25 +49,48 @@ async function showHome() {
   $('#sizeCards').onclick = (e) => { const b = e.target.closest('[data-size]'); if (!b) return; const [, , w, h] = SIZES[b.dataset.size]; openDoc(newDoc(w, h), true); };
   const tg = $('#homeTemplates'); tg.innerHTML = '';
   const probe = newDoc();
-  for (const t of TEMPLATES) {
+  for (const t of [...(await userTemplates()), ...TEMPLATES]) {
     const slides = t.build();
     const c = document.createElement('button'); c.className = 'tpl-card';
-    c.innerHTML = `<div class="thumb"></div><div class="meta">${tr(t.name)}<small>${tr(t.tag)}</small></div>`;
-    c.querySelector('.thumb').appendChild(miniSlide(slides[0], probe, 300));
-    c.onclick = () => { const d = newDoc(1920, 1080, tr(t.name)); d.slides = slides; openDoc(d, true); };
+    c.innerHTML = `<div class="thumb"></div><div class="meta">${t.mine ? escapeHtml(t.name) : tr(t.name)}<small>${tr(t.tag)}</small></div>`;
+    const w = t.w || 1920, h = t.h || 1080;
+    c.querySelector('.thumb').appendChild(miniSlide(slides[0], { w, h }, w / h >= 16 / 9 ? 300 : (300 / (16 / 9)) * (w / h)));
+    c.querySelector('.thumb').style.cssText += ';display:flex;justify-content:center;background:#E9EAF1';
+    c.onclick = () => { const d = newDoc(w, h, t.mine ? t.name : tr(t.name)); d.slides = slides; openDoc(d, true); };
     tg.appendChild(c);
   }
-  const docs = (await listDocs()).sort((a, b) => b.updated - a.updated);
-  const rg = $('#recentGrid'); rg.innerHTML = docs.length ? '' : `<div class="empty-note">${tr('Your designs will appear here. Everything is saved on this computer automatically.')}</div>`;
+  // folders
+  const folders = await getFolders();
+  if (homeFolder && !folders.some((f) => f.id === homeFolder)) homeFolder = null;
+  $('#folderBar').innerHTML = [`<button class="chip ${!homeFolder ? 'on' : ''}" data-folder="">${ic('layout-grid')} ${tr('All')}</button>`,
+    ...folders.map((f) => `<button class="chip ${homeFolder === f.id ? 'on' : ''}" data-folder="${f.id}">${ic('folder')} ${escapeHtml(f.name)}</button>`),
+    `<button class="chip add" id="newFolder">${ic('folder-plus')} ${tr('New folder')}</button>`,
+    homeFolder ? `<button class="chip danger" id="delFolder" title="${tr('Delete this folder (the designs stay)')}">${ic('trash-2')}</button>` : ''].join('');
+  $('#folderBar').onclick = (e) => {
+    const f = e.target.closest('[data-folder]'); if (f) { homeFolder = f.dataset.folder || null; showHome(); return; }
+    if (e.target.closest('#newFolder')) askName(tr('New folder'), '', async (name) => { homeFolder = (await addFolder(name)).id; showHome(); });
+    if (e.target.closest('#delFolder')) {
+      (async () => { for (const d of await listDocs()) if (d.folder === homeFolder) { delete d.folder; await saveDoc(d); } await deleteFolder(homeFolder); homeFolder = null; showHome(); toast('Folder deleted — its designs are in All'); })();
+    }
+  };
+  const docs = (await listDocs()).filter((d) => !homeFolder || d.folder === homeFolder).sort((a, b) => b.updated - a.updated);
+  const rg = $('#recentGrid'); rg.innerHTML = docs.length ? '' : `<div class="empty-note">${tr(homeFolder ? 'This folder is empty. Move a design here with its folder button.' : 'Your designs will appear here. Everything is saved on this computer automatically.')}</div>`;
   for (const d of docs) {
     const c = document.createElement('div'); c.className = 'recent-card'; c.style.cursor = 'pointer';
     const ago = timeAgo(d.updated);
-    c.innerHTML = `<div class="thumb" style="display:flex;align-items:center;justify-content:center;background:#E9EAF1"></div><div class="meta"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(d.title)}</span><small>${ago}</small></div><button class="del" title="${tr('Delete')}">${ic('trash-2')}</button>`;
+    c.innerHTML = `<div class="thumb" style="display:flex;align-items:center;justify-content:center;background:#E9EAF1"></div><div class="meta"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(d.title)}</span><small>${ago}</small></div><button class="del" title="${tr('Delete')}">${ic('trash-2')}</button><button class="del mv" title="${tr('Move to a folder')}">${ic('folder-input')}</button>`;
     const box = c.querySelector('.thumb');
     const ratio = d.w / d.h, bw = 300, bh = 300 / (16 / 9);
     const tw = ratio >= 16 / 9 ? bw : bh * ratio;
     box.appendChild(miniSlide(d.slides[0], d, tw));
     c.onclick = (e) => {
+      if (e.target.closest('.mv')) {
+        e.stopPropagation();
+        popover(e.target.closest('.mv'), `<h4>${tr('Move to a folder')}</h4><div class="pop-list">${[{ id: '', name: tr('No folder') }, ...folders].map((f) => `<button data-to="${f.id}" class="${(d.folder || '') === f.id ? 'on' : ''}">${ic(f.id ? 'folder' : 'layout-grid')} ${escapeHtml(f.name)}</button>`).join('')}</div>${folders.length ? '' : `<p class="hint">${tr('Create a folder first with “New folder”.')}</p>`}`, (p) => {
+          p.onclick = async (ev) => { const b = ev.target.closest('[data-to]'); if (!b) return; closePopover(); if (b.dataset.to) d.folder = b.dataset.to; else delete d.folder; await saveDoc(d); showHome(); toast('Design moved'); };
+        });
+        return;
+      }
       if (e.target.closest('.del')) {
         e.stopPropagation();
         const b = e.target.closest('.del');
@@ -105,23 +129,25 @@ function openDoc(doc, isNew = false) {
 function wireTopbar() {
   $('#homeBtn').onclick = showHome;
   $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo;
-  $('#presentBtn').onclick = () => { if (state.editingId) stopEditing(); present(state.slide); };
+  $('#presentBtn').onclick = () => { if (state.editingId) stopEditing(); present(state.slide, hasNotes()); };
   $('#titleInput').addEventListener('change', (e) => { state.doc.title = e.target.value.trim() || tr('Untitled presentation'); e.target.value = state.doc.title; commit(); });
   $('#titleInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') e.target.blur(); });
   const menu = $('#fileMenu');
   $('#fileMenuBtn').onclick = (e) => { e.stopPropagation(); menu.classList.toggle('open'); };
   document.addEventListener('click', (e) => { if (!e.target.closest('.menu-wrap')) menu.classList.remove('open'); });
   menu.onclick = (e) => { const a = e.target.closest('[data-act]')?.dataset.act; if (!a) return; menu.classList.remove('open'); fileAction(a); };
-  $('#downloadBtn').onclick = (e) => popover(e.currentTarget, `<h4>Download</h4><div class="pop-list">
-      <button data-d="pptx">${ic('presentation')} PowerPoint (.pptx)<small style="margin-left:auto;color:var(--text-3)">editable text</small></button>
-      <button data-d="pdf">${ic('file-text')} PDF — all slides</button><button data-d="png">${ic('image')} PNG — this slide</button>
-      <button data-d="pngt">${ic('image-off')} PNG — transparent background</button>
-      <button data-d="save">${ic('save')} Deckly file (.deckly)</button></div>`, (p) => { p.onclick = (ev) => { const d = ev.target.closest('[data-d]')?.dataset.d; if (d) { closePopover(); fileAction(d); } }; });
+  $('#downloadBtn').onclick = () => downloadDialog(modal, closeModal, ic);
   $('#zoomVal').title = tr('Fit to screen');
   $('#zoomIn').onclick = () => setZoom(Math.min(4, state.scale * 1.2));
   $('#zoomOut').onclick = () => setZoom(Math.max(0.1, state.scale / 1.2));
   $('#zoomVal').onclick = () => setZoom('fit');
   $('#helpBtn').onclick = shortcutsModal;
+  // speaker notes under the slide
+  const notesBar = $('#notesBar'), notesText = $('#notesText');
+  let notesT;
+  $('#notesBtn').onclick = () => { notesBar.classList.toggle('hidden'); $('#notesBtn').classList.toggle('on', !notesBar.classList.contains('hidden')); if (!notesBar.classList.contains('hidden')) notesText.focus(); };
+  notesText.addEventListener('input', () => { state.doc.slides[state.slide].notes = notesText.value; clearTimeout(notesT); notesT = setTimeout(commit, 600); });
+  on((w) => { if (['all', 'slide', 'history'].includes(w) && state.doc && document.activeElement !== notesText) notesText.value = state.doc.slides[state.slide]?.notes || ''; });
   $('#openFileHome').onclick = () => $('#fileOpen').click();
   $('#homeUpdates').onclick = (e) => popover(e.currentTarget, `<div class="pop-list"><button data-u="check">${ic('refresh-cw')} Check for updates</button><button data-u="settings">${ic('settings')} Update settings…</button></div>`,
     (p) => { p.onclick = (ev) => { const u = ev.target.closest('[data-u]')?.dataset.u; if (!u) return; closePopover(); if (u === 'check') checkNow(); else askChoice(); }; });
@@ -129,7 +155,7 @@ function wireTopbar() {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     try { const d = await readFile(f); d.id = uid(); d.updated = Date.now(); await saveDoc(d); openDoc(d); toast('Design opened'); } catch { toast('This file could not be opened'); }
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'F5' && !$('#editor').classList.contains('hidden')) { e.preventDefault(); present(e.shiftKey ? state.slide : 0); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'F5' && !$('#editor').classList.contains('hidden')) { e.preventDefault(); present(e.shiftKey ? state.slide : 0, hasNotes()); } });
   on((w) => {
     if (w === 'saving') $('#saveState').innerHTML = `${ic('loader')}${tr('Saving…')}`;
     if (w === 'saved') { $('#saveState').innerHTML = `${ic('cloud-check')}${tr('Saved')}`; snapshotVersion(); }
@@ -149,8 +175,10 @@ function fileAction(a) {
   if (a === 'save') saveFile();
   if (a === 'png') exportPng();
   if (a === 'pngt') exportPng(true);
+  if (a === 'download') downloadDialog(modal, closeModal, ic);
   if (a === 'resize') resizeDialog(openDoc);
   if (a === 'versions') versionsDialog();
+  if (a === 'save-template') saveAsTemplate();
   if (a === 'pdf') exportPdf();
   if (a === 'pptx') exportPptx();
   if (a === 'check-updates') checkNow();
@@ -169,3 +197,4 @@ function updateNet() {
     p.title = tr(on ? 'Searches also use the web. Click to work offline only.' : 'Only the built-in library is used. Click to allow web search.');
   });
 }
+const hasNotes = () => state.doc.slides.some((s) => (s.notes || '').trim());

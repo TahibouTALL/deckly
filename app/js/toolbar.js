@@ -2,7 +2,7 @@
 import { state, emit, on, commit, curSlide, selected, findEl } from './store.js';
 import { packs, ic, SHAPES, FRAMES, shapeSvg } from './assets.js';
 import { popover, closePopover, openColorPopover, toast } from './ui.js';
-import { layer, align, removeSel, duplicate, patchNode, renderOverlay, startEditing } from './editor.js';
+import { layer, align, removeSel, duplicate, patchNode, renderOverlay, startEditing, groupSel, ungroupSel, isOneGroup } from './editor.js';
 import { openTab } from './panels.js';
 import { t as tr, translateDom } from './i18n.js';
 import { animatePopover, transitionPopover } from './pro.js';
@@ -36,6 +36,7 @@ function render() {
       + `<span class="ctx-label push">Tip: click an element to edit it · double-click text to type</span>`;
   } else if (els.length > 1) {
     h = `<span class="ctx-label">${tr('{n} selected', { n: els.length })}</span>`
+      + `<div class="grp">${isOneGroup(els) ? btn('ungroup', 'ungroup', 'Ungroup (Ctrl+Shift+G)', false, 'Ungroup') : btn('group', 'group', 'Group (Ctrl+G)', false, 'Group')}</div>`
       + `<div class="grp">${btn('al-left', 'align-start-vertical', 'Align left')}${btn('al-center', 'align-center-vertical', 'Align centre')}${btn('al-right', 'align-end-vertical', 'Align right')}${btn('al-top', 'align-start-horizontal', 'Align top')}${btn('al-middle', 'align-center-horizontal', 'Align middle')}${btn('al-bottom', 'align-end-horizontal', 'Align bottom')}</div>`
       + `<div class="grp">${btn('dist-h', 'align-horizontal-space-around', 'Space evenly across')}${btn('dist-v', 'align-vertical-space-around', 'Space evenly down')}</div>`
       + common(els);
@@ -143,6 +144,8 @@ function onClick(e) {
     case 'lock': { const v = !selected().every((x) => x.locked); set((x) => (x.locked = v)); break; }
     case 'del': removeSel(); break;
     case 'dist-h': case 'dist-v': distribute(a === 'dist-h' ? 'x' : 'y'); break;
+    case 'group': groupSel(); break;
+    case 'ungroup': ungroupSel(); break;
     default: if (a.startsWith('al-')) align(a.slice(3)); if (a.startsWith('ltype-')) set((x) => (x.shape = a.slice(6)));
   }
 }

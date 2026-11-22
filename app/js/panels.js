@@ -6,7 +6,7 @@ import { addElement, startEditing } from './editor.js';
 import { miniSlide } from './render.js';
 import { toast, openColorPopover } from './ui.js';
 import { t as tr, translateDom } from './i18n.js';
-import { brandPanel, uploadFont } from './pro.js';
+import { brandPanel, uploadFont, userTemplates, deleteTemplate } from './pro.js';
 
 const $ = (s) => document.querySelector(s);
 const TABS = [
@@ -37,6 +37,7 @@ export function initPanels() {
   });
   document.addEventListener('deckly-drop', (e) => addItem(e.detail.item, { x: e.detail.x, y: e.detail.y }));
   document.addEventListener('deckly-files', (e) => uploadFiles(e.detail.files, e.detail.x != null ? { x: e.detail.x, y: e.detail.y } : null));
+  document.addEventListener('deckly-templates', () => { if (tab === 'design') renderPanel(); });
   document.addEventListener('deckly-add-text', () => addItem({ k: 'text', preset: 'body' }));
   document.addEventListener('packs', () => { if (['stickers', 'logos', 'elements'].includes(tab)) renderPanel(); });
   $('#fileUpload').addEventListener('change', (e) => { uploadFiles([...e.target.files]); e.target.value = ''; });
@@ -78,6 +79,21 @@ export function renderPanel() {
 
 // ---------- tabs ----------
 function design(body, q) {
+  // my own templates first (filled in once loaded)
+  const mine = document.createElement('div'); body.appendChild(mine);
+  userTemplates().then((list) => {
+    list = list.filter((t) => !q || t.name.toLowerCase().includes(q));
+    if (!list.length || tab !== 'design') return;
+    mine.innerHTML = sec(tr('My templates')) + '<div class="tpl-list"></div>';
+    for (const t of list) {
+      const card = document.createElement('div'); card.className = 'tpl-item';
+      card.innerHTML = `<button class="thumb" style="display:block;width:100%;padding:0"></button><div class="meta">${t.name.replace(/</g, '&lt;')}<button class="cb danger" title="${tr('Delete')}" data-deltpl>${ic('trash-2')}</button></div>`;
+      card.querySelector('.thumb').appendChild(miniSlide(t.build()[0], { w: t.w, h: t.h }, 310));
+      card.querySelector('.thumb').onclick = () => applyTemplate(t);
+      card.querySelector('[data-deltpl]').onclick = async () => { await deleteTemplate(t.id); renderPanel(); toast('Template deleted'); };
+      mine.querySelector('.tpl-list').appendChild(card);
+    }
+  });
   body.insertAdjacentHTML('beforeend', sec('Add a slide'));
   const lay = document.createElement('div'); lay.className = 'grid g3'; body.appendChild(lay);
   blankSlideLayouts().forEach((L, i) => {
@@ -315,7 +331,7 @@ export async function addItem(it, at) {
       const x = at ? at.x - 600 : D.w / 2 - 600, y = at ? at.y - 120 : D.h / 2 - 120;
       const h1 = { id: uid(), type: 'text', html: tr(t1), font: a, size: 120, bold: a !== 'Bebas Neue' && a !== 'Pacifico' && a !== 'Caveat', color: c, align: 'center', lineHeight: 1.1, x, y, w: 1200, h: 140, rot: 0, opacity: 1 };
       const h2 = { id: uid(), type: 'text', html: tr(t2), font: b, size: 44, color: c, align: 'center', lineHeight: 1.3, x, y: y + 170, w: 1200, h: 60, rot: 0, opacity: 0.8 };
-      curSlide().elements.push(h1, h2); state.sel = [h1.id, h2.id]; commit(); emit('canvas'); break;
+      h1.group = h2.group = 'g' + uid(); curSlide().elements.push(h1, h2); state.sel = [h1.id, h2.id]; commit(); emit('canvas'); break;
     }
     case 'chart': addChart(it.kind, at); break;
   }
@@ -384,6 +400,7 @@ function addChart(kind, at) {
     const rows = [['Plan', 'Price', 'Users'], ['Starter', '$9', '1'], ['Team', '$29', '10'], ['Business', '$79', 'Unlimited']];
     rows.forEach((r, i) => r.forEach((cell, j) => { const x = ox + j * 400, y = oy + i * 120; els.push(R(x, y, 396, 116, i === 0 ? '#6C4CF5' : i % 2 ? '#F4F1FF' : '#FFFFFF'), T(cell, x + 30, y + 36, 340, 36, { bold: i === 0, color: i === 0 ? '#FFFFFF' : '#1E1F2B' })); }));
   }
+  const g = 'g' + uid(); els.forEach((e) => (e.group = g));
   curSlide().elements.push(...els); state.sel = els.map((e) => e.id); commit(); emit('canvas');
-  toast('Added — click any part to edit it');
+  toast('Added — click again on a part to edit just that part');
 }

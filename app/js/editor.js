@@ -149,8 +149,28 @@ export function toStage(cx, cy) {
 // ---------- selection ----------
 export function select(ids, add = false) {
   if (state.editingId) stopEditing();
+  // clicking one element of a group selects the whole group
+  const groups = new Set(ids.map((id) => findEl(id)?.group).filter(Boolean));
+  if (groups.size) ids = [...new Set([...ids, ...curSlide().elements.filter((e) => groups.has(e.group)).map((e) => e.id)])];
   state.sel = add ? [...new Set([...state.sel, ...ids])] : ids;
   emit('sel');
+}
+export function groupSel() {
+  const els = selected(); if (els.length < 2) return;
+  const g = 'g' + uid(); els.forEach((e) => (e.group = g));
+  commit(); emit('canvas');
+}
+export function ungroupSel() {
+  const els = selected(); if (!els.some((e) => e.group)) return;
+  els.forEach((e) => delete e.group);
+  commit(); emit('canvas');
+}
+export const isOneGroup = (els) => els.length > 1 && els[0].group && els.every((e) => e.group === els[0].group);
+// copies of grouped elements form new groups of their own
+function regroup(copies) {
+  const map = {};
+  for (const c of copies) if (c.group) c.group = map[c.group] ||= 'g' + uid();
+  return copies;
 }
 
 function hitEl(target) {
@@ -187,14 +207,15 @@ function onDown(e) {
     const el = hitEl(e.target);
     if (el) {
       if (e.shiftKey) { select(state.sel.includes(el.id) ? state.sel.filter((i) => i !== el.id) : [...state.sel, el.id]); return; }
-      if (!state.sel.includes(el.id)) select([el.id]);
+      const already = state.sel.includes(el.id);
+      if (!already) select([el.id]);
       const els = selected().filter((x) => !x.locked);
       if (!els.length) return;
       if (e.altKey) { // alt-drag duplicates
-        const copies = els.map((x) => ({ ...clone(x), id: uid() }));
+        const copies = regroup(els.map((x) => ({ ...clone(x), id: uid() })));
         curSlide().elements.push(...copies); emit('canvas'); select(copies.map((c) => c.id));
         drag = { mode: 'move', els: copies, start: p, origs: copies.map(clone), moved: false };
-      } else drag = { mode: 'move', els, start: p, origs: els.map(clone), moved: false };
+      } else drag = { mode: 'move', els, start: p, origs: els.map(clone), moved: false, pickOne: already && el.group && state.sel.length > 1 ? el.id : null };
     } else {
       select([]);
       drag = { mode: 'marquee', start: p, sx: e.clientX, sy: e.clientY };
@@ -241,7 +262,11 @@ function onUp() {
   drawGuides([]);
   if (!d) return;
   if (d.mode === 'marquee') { $('#marquee').classList.add('hidden'); if (d.hits?.length) select(d.hits); return; }
-  if (d.mode === 'move' && !d.moved) { renderOverlay(); return; }
+  if (d.mode === 'move' && !d.moved) {
+    // second click inside a selected group: select just that piece
+    if (d.pickOne) { state.sel = [d.pickOne]; emit('sel'); return; }
+    renderOverlay(); return;
+  }
   commit(); emit('canvas');
 }
 
@@ -371,7 +396,7 @@ export function removeSel() {
 }
 export function duplicate() {
   const els = selected(); if (!els.length) return;
-  const copies = els.map((e) => ({ ...clone(e), id: uid(), x: e.x + 30, y: e.y + 30 }));
+  const copies = regroup(els.map((e) => ({ ...clone(e), id: uid(), x: e.x + 30, y: e.y + 30 })));
   curSlide().elements.push(...copies); state.sel = copies.map((c) => c.id);
   commit(); emit('canvas');
 }
@@ -411,7 +436,7 @@ function onPaste(e) {
   if (txt.startsWith('deckly:')) { try { items = JSON.parse(txt.slice(7)); } catch { /* */ } }
   if (items) {
     e.preventDefault();
-    const copies = items.map((x) => ({ ...x, id: uid(), x: x.x + 30, y: x.y + 30 }));
+    const copies = regroup(items.map((x) => ({ ...x, id: uid(), x: x.x + 30, y: x.y + 30 })));
     curSlide().elements.push(...copies); state.sel = copies.map((c) => c.id); commit(); emit('canvas');
   } else if (txt.trim()) {
     e.preventDefault();
@@ -428,6 +453,7 @@ function onKey(e) {
   if (mod && k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
   if (mod && (k === 'y' || (k === 'z' && e.shiftKey))) { e.preventDefault(); redo(); return; }
   if (mod && k === 'd') { e.preventDefault(); duplicate(); return; }
+  if (mod && k === 'g') { e.preventDefault(); if (e.shiftKey) ungroupSel(); else groupSel(); return; }
   if (mod && k === 'a') { e.preventDefault(); select(curSlide().elements.filter((x) => !x.locked).map((x) => x.id)); return; }
   if (mod && k === '0') { e.preventDefault(); setZoom('fit'); return; }
   if (k === 'delete' || k === 'backspace') { e.preventDefault(); removeSel(); return; }

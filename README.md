@@ -62,6 +62,13 @@ The interface opens in **French**. People can switch to English (and back) with 
 - **Transparent PNG** export.
 - **Version history** (File menu): a copy every 5 minutes of editing, the last 30 kept, restore in one click.
 - **Your own fonts**: Text tab → "+ Upload a font" (.ttf, .otf, .woff, .woff2).
+- **Several brand kits** (one per client or project), switched from the Marque tab.
+- **High-resolution download** (Download button): PNG, JPG, PDF standard / print, PowerPoint, SVG; ×1, ×2, ×3 or 4K; one slide or all (several images come as a .zip).
+- **My templates**: File → Save as my template; they appear first in Design and on the home screen.
+- **Folders** on the home screen; each design card has a "move to folder" button.
+- **Group / ungroup** (Ctrl+G / Ctrl+Shift+G); a second click picks one piece of a group.
+- **Speaker notes** (Notes button under the slide) and **presenter view** in Present mode (P): notes, timer, next slide. Notes also go into the PowerPoint export.
+- **14 templates** (6 new: business plan, quarterly results, roadmap, workshop, event, restaurant menu).
 
 ## Built-in library (`app/assets/`)
 

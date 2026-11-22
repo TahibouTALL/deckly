@@ -6,20 +6,32 @@ import { modal, closeModal, toast, popover, closePopover, openColorPopover, bran
 import { t as tr, translateDom } from './i18n.js';
 
 // ======================= BRAND KIT =======================
-export const brand = { colors: [], heading: null, body: null, logos: [] };
+// Several brand kits (one per client, project or company); one is active at a time.
+const newKit = (name) => ({ id: uid(), name, colors: [], heading: null, body: null, logos: [] });
+let kits = [], activeKit = null;
+export let brand = newKit('');
 export async function loadBrand() {
   const all = await libAll();
-  const b = all.find((x) => x.id === 'brandkit');
-  if (b) Object.assign(brand, { colors: b.colors || [], heading: b.heading || null, body: b.body || null, logos: b.logos || [] });
+  const store = all.find((x) => x.id === 'brandkits');
+  if (store) { kits = store.kits || []; activeKit = store.active; }
+  else {
+    const old = all.find((x) => x.id === 'brandkit'); // first version had a single kit
+    const k = newKit(tr('My brand'));
+    if (old) Object.assign(k, { colors: old.colors || [], heading: old.heading || null, body: old.body || null, logos: old.logos || [] });
+    kits = [k]; activeKit = k.id;
+  }
+  brand = kits.find((k) => k.id === activeKit) || kits[0];
   brandSwatches.list = brand.colors;
   // custom fonts
   for (const f of all.filter((x) => x.kind === 'font')) await registerFont(f);
 }
-const saveBrand = () => libPut({ id: 'brandkit', kind: 'brand', t: Date.now(), ...clone(brand) });
+const saveBrand = () => libPut({ id: 'brandkits', kind: 'brand', t: Date.now(), active: brand.id, kits: clone(kits) });
 
 export function brandPanel(body, addItem) {
   const sw = brand.colors.map((c, i) => `<div class="brand-sw" style="background:${c}" data-bc="${c}" title="${c}"><button data-brm="${i}" title="Remove">${ic('x')}</button></div>`).join('');
   body.insertAdjacentHTML('beforeend', `<div class="online-box">${ic('gem')} <b>Brand kit</b> — Keep your colours, fonts and logos in one place, and use them in one click.</div>
+    <div class="kit-bar"><select id="kitPick">${kits.map((k) => `<option value="${k.id}" ${k.id === brand.id ? 'selected' : ''}>${k.name.replace(/</g, '&lt;')}</option>`).join('')}</select>
+      <button class="cb" id="kitRename" title="Rename">${ic('pencil')}</button><button class="cb" id="kitNew" title="New brand kit">${ic('plus')}</button>${kits.length > 1 ? `<button class="cb danger" id="kitDel" title="Delete this kit">${ic('trash-2')}</button>` : ''}</div>
     <div class="sec"><h3>Brand colours</h3></div>
     <div class="swatches">${sw}<button class="sw add-sw" id="brandAddColor" title="Add a colour">${ic('plus')}</button></div>
     <div class="sec"><h3>Brand fonts</h3></div>
@@ -32,6 +44,15 @@ export function brandPanel(body, addItem) {
     <input type="file" id="brandLogoFile" accept="image/*" hidden>`);
   translateDom(body);
   const rerender = () => { body.innerHTML = ''; brandPanel(body, addItem); };
+  const useKit = (k) => { brand = k; brandSwatches.list = brand.colors; saveBrand(); rerender(); };
+  body.querySelector('#kitPick').onchange = (e) => useKit(kits.find((k) => k.id === e.target.value));
+  body.querySelector('#kitNew').onclick = () => askName(tr('New brand kit'), tr('Brand kit {n}', { n: kits.length + 1 }), (name) => { const k = newKit(name); kits.push(k); useKit(k); });
+  body.querySelector('#kitRename').onclick = () => askName(tr('Rename'), brand.name, (name) => { brand.name = name; saveBrand(); rerender(); });
+  const del = body.querySelector('#kitDel');
+  if (del) del.onclick = (e) => popover(e.currentTarget, `<div style="font-weight:600;margin-bottom:6px">${tr('Delete “{name}”?', { name: brand.name.replace(/</g, '&lt;') })}</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ghost" data-no>Cancel</button><button class="btn primary" data-yes style="background:#C0354F;box-shadow:none">Delete</button></div>`, (p) => {
+    p.querySelector('[data-no]').onclick = closePopover;
+    p.querySelector('[data-yes]').onclick = () => { closePopover(); kits = kits.filter((k) => k !== brand); useKit(kits[0]); };
+  });
   body.querySelector('#brandAddColor').onclick = (e) => openColorPopover(e.currentTarget, '#6C4CF5', () => {}, null, { onFinal: (c) => { if (!brand.colors.includes(c)) brand.colors.push(c); brandSwatches.list = brand.colors; saveBrand(); closePopover(); rerender(); } });
   body.querySelectorAll('[data-brm]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); brand.colors.splice(+b.dataset.brm, 1); saveBrand(); rerender(); }));
   body.querySelectorAll('[data-bc]').forEach((b) => (b.onclick = () => applyColor(b.dataset.bc)));
@@ -213,3 +234,43 @@ export function playAnimations(node, slide) {
 export const fileToDataUrl = (f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
 export const loadImg = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
 export { SIZES as RESIZE_SIZES, newDoc, resetHistory, PALETTE };
+
+// ======================= small name window =======================
+export function askName(title, value, onOk) {
+  modal(`<h3>${title}</h3><input class="name-input" id="askName" maxlength="80" value="${String(value || '').replace(/"/g, '&quot;')}">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="askOk">${ic('check')} OK</button></div>`);
+  const inp = document.querySelector('#askName'); inp.focus(); inp.select();
+  const ok = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } closeModal(); onOk(v); };
+  document.querySelector('#askOk').onclick = ok;
+  inp.onkeydown = (e) => { if (e.key === 'Enter') ok(); if (e.key === 'Escape') closeModal(); };
+}
+
+// ======================= MY TEMPLATES =======================
+export function saveAsTemplate() {
+  askName(tr('Save as my template'), state.doc.title, async (name) => {
+    await libPut({ id: 'tpl-' + uid(), kind: 'usertemplate', t: Date.now(), name, w: state.doc.w, h: state.doc.h, slides: clone(state.doc.slides) });
+    toast(tr('Template “{name}” saved — find it in Design → My templates', { name }));
+    document.dispatchEvent(new Event('deckly-templates'));
+  });
+}
+export async function userTemplates() {
+  return (await libAll()).filter((x) => x.kind === 'usertemplate').sort((a, b) => b.t - a.t).map((u) => ({
+    id: u.id, name: u.name, tag: tr('My template'), mine: true, w: u.w, h: u.h,
+    build: () => clone(u.slides).map((s) => ({ ...s, id: uid(), elements: regroupIds(s.elements) })),
+  }));
+}
+function regroupIds(els) {
+  const map = {};
+  return els.map((e) => ({ ...e, id: uid(), ...(e.group ? { group: (map[e.group] ||= 'g' + uid()) } : {}) }));
+}
+export const deleteTemplate = (id) => libDel(id);
+
+// ======================= FOLDERS =======================
+export async function getFolders() { return (await libAll()).find((x) => x.id === 'folders')?.list || []; }
+export async function addFolder(name) {
+  const list = await getFolders(); const f = { id: uid(), name }; list.push(f);
+  await libPut({ id: 'folders', kind: 'folders', t: Date.now(), list }); return f;
+}
+export async function deleteFolder(id) {
+  await libPut({ id: 'folders', kind: 'folders', t: Date.now(), list: (await getFolders()).filter((f) => f.id !== id) });
+}

@@ -57,7 +57,7 @@ export const closeModal = () => $('#modal').classList.add('hidden');
 
 export function shortcutsModal() {
   const rows = [['Add text', 'T'], ['Edit selected text', 'Enter'], ['Stop editing', 'Esc'], ['Undo / Redo', 'Ctrl Z / Ctrl Y'], ['Duplicate', 'Ctrl D'], ['Copy / Paste', 'Ctrl C / Ctrl V'],
-    ['Delete', tr('Del')], ['Select all', 'Ctrl A'], ['Nudge (×10 with Shift)', '← ↑ → ↓'], ['Duplicate while dragging', 'Alt + drag'], ['No snapping while dragging', 'Ctrl + drag'],
+    ['Delete', tr('Del')], ['Group / Ungroup', 'Ctrl G / Ctrl Shift G'], ['Select all', 'Ctrl A'], ['Nudge (×10 with Shift)', '← ↑ → ↓'], ['Duplicate while dragging', 'Alt + drag'], ['No snapping while dragging', 'Ctrl + drag'],
     ['Free resize (images) / keep ratio (shapes)', 'Shift + corner'], ['Zoom', 'Ctrl + wheel'], ['Fit to screen', 'Ctrl 0'], ['Present', 'F5']];
   modal(`<h3>Keyboard shortcuts</h3><div class="kbd-list">${rows.map(([a, b]) => `<span>${a}</span><span>${b.split(' / ').map((k) => `<kbd>${k}</kbd>`).join(' / ')}</span>`).join('')}</div>
     <div style="text-align:right;margin-top:18px"><button class="btn primary" data-close>Got it</button></div>`);

@@ -189,6 +189,132 @@ export const TEMPLATES = [
       ]),
     ],
   },
+  {
+    id: 'bizplan', name: 'Business Plan', tag: 'Business', build: () => [
+      slide('#0B1F3A', [
+        S('rect', 1180, 0, 740, 1080, '#F2B134'), P('City', 2, 1260, 140, 580, 800, { r: 2 }),
+        T('BUSINESS PLAN 2026', 140, 320, 900, 32, { color: '#F2B134', bold: true, sp: 40 }),
+        T('Atelier Nord', 140, 380, 1000, 150, { font: 'Montserrat', bold: true, color: '#FFFFFF', lh: 1 }),
+        T('A neighbourhood bakery that delivers every morning.', 145, 580, 900, 44, { color: '#C9D4E5', lh: 1.4 }),
+      ]),
+      slide('#FFFFFF', [
+        T('The plan in 4 steps', 140, 110, 1400, 84, { font: 'Montserrat', bold: true, color: '#0B1F3A' }),
+        ...[['Market', 'Who buys and why'], ['Offer', 'What we sell, at what price'], ['Team', 'Who does what'], ['Money', 'Costs, sales, break-even']].flatMap(([a, b], k) => [
+          S('rounded', 140 + k * 420, 320, 380, 520, k % 2 ? '#F5F7FB' : '#0B1F3A', { r: 6 }),
+          T(String(k + 1).padStart(2, '0'), 190 + k * 420, 370, 200, 90, { font: 'Montserrat', bold: true, color: '#F2B134' }),
+          T(a, 190 + k * 420, 520, 300, 52, { font: 'Montserrat', bold: true, color: k % 2 ? '#0B1F3A' : '#FFFFFF' }),
+          T(b, 190 + k * 420, 600, 290, 34, { color: k % 2 ? '#5B5E73' : '#C9D4E5', lh: 1.4 }),
+        ]),
+      ]),
+      slide('#F2B134', [
+        T('We are looking for €80,000', 140, 380, 1640, 110, { font: 'Montserrat', bold: true, color: '#0B1F3A' }),
+        T('to open our first shop in spring.', 145, 540, 1400, 50, { color: '#0B1F3A' }),
+      ]),
+    ],
+  },
+  {
+    id: 'results', name: 'Quarterly Results', tag: 'Report', build: () => [
+      slide('linear-gradient(135deg,#0F2027,#203A43,#2C5364)', [
+        T('Q3 2026', 140, 340, 800, 40, { color: '#7FD1C7', bold: true, sp: 30 }),
+        T('Quarterly results', 140, 400, 1400, 140, { font: 'Space Grotesk', bold: true, color: '#FFFFFF' }),
+        L('line', 145, 600, 220, '#7FD1C7', 6),
+      ]),
+      slide('#FFFFFF', [
+        T('Sales by quarter', 140, 110, 1200, 80, { font: 'Space Grotesk', bold: true, color: '#0F2027' }),
+        ...[45, 60, 52, 88].flatMap((v, k) => [
+          S('rounded', 220 + k * 340, 900 - v * 6, 200, v * 6, k === 3 ? '#1FB5A6' : '#C8F1EC', { r: 8 }),
+          T(v + 'k', 220 + k * 340, 900 - v * 6 - 64, 200, 40, { bold: true, align: 'center', color: '#0F2027' }),
+          T('Q' + (k + 1), 220 + k * 340, 920, 200, 32, { align: 'center', color: '#5B5E73' }),
+        ]),
+        S('rounded', 1580, 300, 260, 160, '#0F2027', { r: 10 }), T('+69%', 1580, 330, 260, 60, { font: 'Space Grotesk', bold: true, color: '#7FD1C7', align: 'center' }),
+        T('vs Q2', 1580, 400, 260, 28, { color: '#FFFFFF', align: 'center', op: 0.7 }),
+      ]),
+      slide('#F5F7FA', [
+        T('What we learned', 140, 120, 1200, 80, { font: 'Space Grotesk', bold: true, color: '#0F2027' }),
+        ...[['circle-check', 'New customers came from word of mouth'], ['circle-alert', 'Delivery times grew in August'], ['target', 'Next goal: 100k in Q4']].flatMap(([ic, t2], k) => [
+          I(ic, 140, 330 + k * 180, 70, ['#1FB5A6', '#FF8A3D', '#3D8BFF'][k], 2), T(t2, 250, 340 + k * 180, 1400, 46, { color: '#0F2027' }),
+        ]),
+      ]),
+    ],
+  },
+  {
+    id: 'roadmap', name: 'Project Roadmap', tag: 'Work', build: () => [
+      slide('#FFF8F0', [
+        S('blob1', 1250, 380, 760, 760, '#FFD6A5'), S('circle', 1580, 180, 160, 160, '#FF8A3D'),
+        T('Project roadmap', 140, 360, 1200, 140, { font: 'Poppins', bold: true, color: '#3A2412' }),
+        T('From idea to launch in 6 months', 145, 540, 1000, 48, { color: '#7A5A3E' }),
+      ]),
+      slide('#FFFFFF', [
+        T('Timeline', 140, 110, 1000, 84, { font: 'Poppins', bold: true, color: '#3A2412' }),
+        S('rounded', 140, 520, 1640, 12, '#FFE2CC', { r: 50 }),
+        ...[['January', 'Research'], ['March', 'Design'], ['May', 'Build'], ['June', 'Launch']].flatMap(([m, t2], k) => [
+          S('circle', 160 + k * 520, 486, 80, 80, ['#FFC83D', '#FF8A3D', '#FF5A5F', '#6C4CF5'][k]),
+          T(m, 100 + k * 520, 360, 200, 40, { bold: true, align: 'center', color: '#3A2412' }),
+          T(t2, 100 + k * 520, 620, 200, 36, { align: 'center', color: '#7A5A3E' }),
+        ]),
+      ]),
+      slide('#3A2412', [
+        T('Next steps', 140, 140, 1000, 90, { font: 'Poppins', bold: true, color: '#FFFFFF' }),
+        T('• Validate the budget<br>• Hire two developers<br>• Book the launch event', 145, 320, 1200, 52, { color: '#FFE2CC', lh: 1.7 }),
+      ]),
+    ],
+  },
+  {
+    id: 'workshop', name: 'Workshop', tag: 'Education', build: () => [
+      slide('linear-gradient(135deg,#E0C3FC,#8EC5FC)', [
+        S('rounded', 140, 200, 1640, 680, '#FFFFFF', { r: 4, op: 0.85 }),
+        T('WORKSHOP · 2 HOURS', 240, 330, 1000, 32, { color: '#6C4CF5', bold: true, sp: 40 }),
+        T('Speak with confidence', 240, 390, 1440, 120, { font: 'Raleway', bold: true, color: '#1E1F2B' }),
+        T('Practical tools to present without stress', 245, 560, 1200, 46, { color: '#5B5E73' }),
+      ]),
+      slide('#FFFFFF', [
+        T('Today’s program', 140, 110, 1200, 84, { font: 'Raleway', bold: true }),
+        ...[['10:00', 'Welcome and goals'], ['10:20', 'Breathing and voice'], ['11:00', 'Short practice in pairs'], ['11:40', 'Questions and feedback']].flatMap(([h, t2], k) => [
+          S('rounded', 140, 280 + k * 160, 1640, 130, k % 2 ? '#F7F7FB' : '#EFEBFF', { r: 8 }),
+          T(h, 190, 320 + k * 160, 200, 44, { bold: true, color: '#6C4CF5' }), T(t2, 420, 320 + k * 160, 1200, 44, { color: '#1E1F2B' }),
+        ]),
+      ]),
+      slide('#6C4CF5', [
+        T('Your turn!', 0, 380, 1920, 150, { font: 'Raleway', bold: true, color: '#FFFFFF', align: 'center' }),
+        T('2 minutes to present an idea to your neighbour', 0, 580, 1920, 46, { color: '#E3DBFF', align: 'center' }),
+      ]),
+    ],
+  },
+  {
+    id: 'event', name: 'Event Night', tag: 'Personal', build: () => [
+      slide(photoBg('Night', 0, 'linear-gradient(160deg,#0B0B1A,#2A1B5C 60%,#6C4CF5)'), [
+        S('rect', 0, 0, 1920, 1080, '#0B0B1A', { op: 0.55 }),
+        T('YOU ARE INVITED', 0, 300, 1920, 34, { color: '#FFD166', align: 'center', bold: true, sp: 60 }),
+        T('Summer Gala', 0, 360, 1920, 200, { font: 'DM Serif Display', color: '#FFFFFF', align: 'center' }),
+        T('Saturday 14 June · 8 pm · Riverside Hall', 0, 620, 1920, 46, { color: '#FFFFFF', align: 'center', op: 0.9 }),
+      ]),
+      slide('#0B0B1A', [
+        T('The evening', 140, 120, 1000, 90, { font: 'DM Serif Display', color: '#FFD166' }),
+        ...[['wine', 'Welcome drinks'], ['utensils', 'Dinner'], ['music', 'Live music'], ['sparkles', 'Fireworks']].flatMap(([ic, t2], k) => [
+          I(ic, 200 + k * 420, 400, 110, '#FFD166', 1.5), T(t2, 120 + k * 420, 560, 270, 42, { color: '#FFFFFF', align: 'center' }),
+        ]),
+      ]),
+    ],
+  },
+  {
+    id: 'menu', name: 'Restaurant Menu', tag: 'Marketing', build: () => [
+      slide('#F5EBDD', [
+        P('Food', 0, 0, 0, 860, 1080),
+        T('La Table', 1000, 300, 800, 150, { font: 'Playfair Display', italic: true, color: '#3B2A1A' }),
+        T('SEASONAL MENU', 1005, 490, 800, 32, { bold: true, sp: 50, color: '#B85A12' }),
+        L('line', 1005, 560, 200, '#B85A12', 4),
+        T('Fresh, local and homemade since 1998.', 1005, 620, 760, 40, { color: '#5A4632' }),
+      ]),
+      slide('#FFFDF8', [
+        T('Our dishes', 140, 110, 1000, 90, { font: 'Playfair Display', italic: true, color: '#3B2A1A' }),
+        ...[['Tomato & basil soup', '9'], ['Roast chicken, herbs', '18'], ['Wild mushroom risotto', '16'], ['Lemon tart', '7']].flatMap(([d2, p], k) => [
+          T(d2, 140, 300 + k * 150, 1200, 50, { color: '#3B2A1A', font: 'Lora' }),
+          T(p + ' €', 1500, 300 + k * 150, 280, 50, { color: '#B85A12', bold: true, align: 'right', font: 'Lora' }),
+          L('dotLine', 140, 370 + k * 150, 1640, '#D9C7AE', 3),
+        ]),
+      ]),
+    ],
+  },
 ];
 
 export function blankSlideLayouts() {

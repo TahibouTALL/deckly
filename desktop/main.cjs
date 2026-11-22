@@ -50,6 +50,8 @@ app.whenReady().then(() => {
       try {
         const info = await win.webContents.executeJavaScript('({title: document.title, home: !document.querySelector("#home").classList.contains("hidden"), photos: document.querySelectorAll(".tpl-card img, .tpl-card image").length, modal: !document.querySelector("#modal").classList.contains("hidden")})');
         console.log('page', JSON.stringify(info));
+        // DECKLY_SMOKE_JS=<file.js>: runs that test script in the page and prints its result
+        if (process.env.DECKLY_SMOKE_JS) console.log('test', JSON.stringify(await win.webContents.executeJavaScript(fs.readFileSync(process.env.DECKLY_SMOKE_JS, 'utf8'))));
         win.focus();
         fs.writeFileSync(process.env.DECKLY_SMOKE, (await win.webContents.capturePage()).toPNG());
         console.log('smoke ok');

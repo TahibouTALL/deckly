@@ -32,6 +32,7 @@
   <div class="home-section">
     <div class="row-between"><h2>Your designs</h2>
       <button class="btn ghost" id="openFileHome"><i data-ic="folder-open"></i>Open a .deckly file</button></div>
+    <div class="chips folder-bar" id="folderBar"></div>
     <div class="recent-grid" id="recentGrid"></div>
   </div>
 </section>
@@ -48,7 +49,9 @@
         <button data-act="save"><i data-ic="save"></i>Save as file (.deckly)</button>
         <button data-act="resize"><i data-ic="scaling"></i>Magic resize…</button>
         <button data-act="versions"><i data-ic="history"></i>Version history…</button>
+        <button data-act="save-template"><i data-ic="bookmark-plus"></i>Save as my template…</button>
         <hr>
+        <button data-act="download"><i data-ic="download"></i>Download… (all formats, high resolution)</button>
         <button data-act="png"><i data-ic="image"></i>Download this slide (PNG)</button>
         <button data-act="pngt"><i data-ic="image-off"></i>PNG with transparent background</button>
         <button data-act="pdf"><i data-ic="file-text"></i>Download all slides (PDF)</button>
@@ -90,9 +93,11 @@
         </div>
         <div class="marquee hidden" id="marquee"></div>
       </div>
+      <div class="notes-bar hidden" id="notesBar"><textarea id="notesText" placeholder="Write what you want to say on this slide… (only you see it while presenting)"></textarea></div>
       <footer class="bottombar">
         <div class="slides-strip" id="slidesStrip"></div>
         <div class="zoom">
+          <button class="tb-btn sm notes-btn" id="notesBtn" title="Speaker notes"><i data-ic="notebook-pen"></i><span>Notes</span></button>
           <button class="tb-btn sm" id="zoomOut"><i data-ic="minus"></i></button>
           <button class="zoom-val" id="zoomVal">Fit</button>
           <button class="tb-btn sm" id="zoomIn"><i data-ic="plus"></i></button>
@@ -106,7 +111,14 @@
 <!-- PRESENT -->
 <div id="present" class="present hidden">
   <div class="present-stage" id="presentStage"></div>
-  <div class="present-hud"><button id="pPrev"><i data-ic="chevron-left"></i></button><span id="pCount"></span><button id="pNext"><i data-ic="chevron-right"></i></button><button id="pExit"><i data-ic="x"></i></button></div>
+  <aside class="presenter hidden" id="presenter">
+    <div class="pv-top"><span class="pv-timer" id="pvTimer">00:00</span><span class="pv-clock" id="pvClock"></span></div>
+    <div class="pv-label">Speaker notes</div>
+    <div class="pv-notes" id="pvNotes"></div>
+    <div class="pv-label">Next slide</div>
+    <div class="pv-next" id="pvNext"></div>
+  </aside>
+  <div class="present-hud"><button id="pPrev"><i data-ic="chevron-left"></i></button><span id="pCount"></span><button id="pNext"><i data-ic="chevron-right"></i></button><button id="pPresenter" title="Show / hide presenter view (P)"><i data-ic="notebook-pen"></i></button><button id="pExit"><i data-ic="x"></i></button></div>
 </div>
 
 <div class="popover hidden" id="popover"></div>
