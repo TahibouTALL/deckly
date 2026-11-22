@@ -1,7 +1,7 @@
 {
   "name": "deckly",
   "productName": "Deckly",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Offline presentation editor",
   "main": "desktop/main.cjs",
   "author": "Deckly",
