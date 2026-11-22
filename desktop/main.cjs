@@ -45,6 +45,11 @@ app.whenReady().then(() => {
   setupUpdates();
   // Self-test for developers: DECKLY_SMOKE=<file.png> saves a picture of the window, prints page errors and quits.
   if (process.env.DECKLY_SMOKE) {
+    // DECKLY_SMOKE_SIZE=1600x900: a fixed window size, for screenshots
+    const sz = /^(\d+)x(\d+)$/.exec(process.env.DECKLY_SMOKE_SIZE || '');
+    if (sz) win.once('show', () => { win.unmaximize(); win.setContentSize(+sz[1], +sz[2]); win.center(); });
+    // DECKLY_SMOKE_ZOOM=0.67: renders the page smaller, like on a big monitor
+    if (process.env.DECKLY_SMOKE_ZOOM) win.webContents.on('did-finish-load', () => win.webContents.setZoomFactor(+process.env.DECKLY_SMOKE_ZOOM));
     win.webContents.on('console-message', (e) => { if (e.level === 'error') console.log('[page error]', e.message); });
     setTimeout(async () => {
       try {
