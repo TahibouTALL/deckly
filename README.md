@@ -109,3 +109,11 @@ Edit the `cats` list in `tools/fetch-photos.mjs` to add photo categories, or the
 - Slide transitions and element animations.
 - Import `.pptx`.
 - More templates, and illustration packs.
+
+## Download page
+
+https://tahiboutall.github.io/deckly/ (GitHub Pages, served from `docs/`).
+
+- The buttons always point to the newest `.exe` of the latest GitHub release (the page asks GitHub when it opens), so a new release needs no page change.
+- To change the page: edit `tools/site/index.src.html` (`{{ic:name}}` = a Lucide icon), run `node tools/site/build-site.mjs`, then commit and push `docs/`.
+- Screenshots are in `docs/img/`.
