@@ -1,0 +1,5 @@
+tools/node_modules/
+tools/*.log
+node_modules/
+dist/
+dist-build.log

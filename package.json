@@ -1,0 +1,62 @@
+{
+  "name": "deckly",
+  "productName": "Deckly",
+  "version": "1.0.0",
+  "description": "Offline presentation editor",
+  "main": "desktop/main.cjs",
+  "author": "Deckly",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "web": "node server.js",
+    "icon": "node desktop/make-icon.mjs",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
+  "build": {
+    "appId": "app.deckly.editor",
+    "productName": "Deckly",
+    "copyright": "Deckly",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "app/**/*",
+      "desktop/main.cjs",
+      "desktop/preload.cjs",
+      "desktop/icon.png",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "desktop/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Deckly",
+      "artifactName": "Deckly-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "TahibouTALL",
+        "repo": "deckly",
+        "releaseType": "release"
+      }
+    ]
+  }
+}

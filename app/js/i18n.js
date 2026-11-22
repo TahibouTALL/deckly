@@ -1,0 +1,207 @@
+// Interface language. French is the default; English is available in the language menu.
+// Strings are written in English in the code and translated here: t('Add slide') -> 'Ajouter une diapo'.
+const KEY = 'deckly-lang';
+export const LANGS = { fr: 'Français', en: 'English' };
+export let lang = 'fr';
+try { const s = localStorage.getItem(KEY); if (s && LANGS[s]) lang = s; } catch { /* default */ }
+document.documentElement.lang = lang;
+
+export function setLang(l) {
+  if (!LANGS[l] || l === lang) return;
+  try { localStorage.setItem(KEY, l); } catch { /* */ }
+  location.reload();
+}
+
+// t('Hello {name}', {name}) — unknown strings fall back to English
+export function t(s, vars) {
+  let out = lang === 'fr' ? (FR[s] ?? s) : s;
+  if (vars) for (const [k, v] of Object.entries(vars)) out = out.split(`{${k}}`).join(v);
+  return out;
+}
+
+// Translate the static HTML (text nodes, title and placeholder attributes)
+export function translateDom(root = document.body) {
+  if (lang === 'en') return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+  for (const n of nodes) {
+    const k = n.nodeValue.trim();
+    if (k && FR[k]) n.nodeValue = n.nodeValue.replace(k, FR[k]);
+  }
+  root.querySelectorAll('[title],[placeholder]').forEach((el) => {
+    for (const a of ['title', 'placeholder']) { const v = el.getAttribute(a); if (v && FR[v]) el.setAttribute(a, FR[v]); }
+  });
+}
+
+const FR = {
+  // home
+  'What will you present today?': 'Que voulez-vous présenter aujourd’hui ?',
+  'Pick a size to start from scratch, or open a ready-made template.': 'Choisissez un format pour partir de zéro, ou ouvrez un modèle prêt à l’emploi.',
+  'Start from a template': 'Partir d’un modèle',
+  'Your designs': 'Vos créations',
+  'Open a .deckly file': 'Ouvrir un fichier .deckly',
+  'Presentation': 'Présentation', 'Classic slides': 'Diapos classiques', 'Square post': 'Publication carrée',
+  'Story / mobile': 'Story / mobile', 'A4 document': 'Document A4', 'Portrait': 'Portrait',
+  'Your designs will appear here. Everything is saved on this computer automatically.': 'Vos créations apparaîtront ici. Tout est enregistré automatiquement sur cet ordinateur.',
+  'just now': 'à l’instant', '{n} min ago': 'il y a {n} min', '{n} h ago': 'il y a {n} h',
+  'Delete “{name}”?': 'Supprimer « {name} » ?',
+  'This removes it from this computer. It cannot be undone.': 'Elle sera supprimée de cet ordinateur. Impossible d’annuler.',
+  'Cancel': 'Annuler', 'Delete': 'Supprimer', 'Design deleted': 'Création supprimée',
+  'Untitled presentation': 'Présentation sans titre',
+  'Language': 'Langue', 'Del': 'Suppr',
+  // top bar
+  'Home': 'Accueil', 'File': 'Fichier', 'New design': 'Nouvelle création', 'Open file…': 'Ouvrir un fichier…',
+  'Save as file (.deckly)': 'Enregistrer comme fichier (.deckly)', 'Download this slide (PNG)': 'Télécharger cette diapo (PNG)',
+  'Download all slides (PDF)': 'Télécharger toutes les diapos (PDF)', 'Download PowerPoint (.pptx)': 'Télécharger en PowerPoint (.pptx)',
+  'Check for updates': 'Rechercher des mises à jour', 'Update settings…': 'Réglages des mises à jour…',
+  'Undo (Ctrl+Z)': 'Annuler (Ctrl+Z)', 'Redo (Ctrl+Y)': 'Rétablir (Ctrl+Y)', 'Saved': 'Enregistré', 'Saving…': 'Enregistrement…', 'Not saved': 'Non enregistré',
+  'Download': 'Télécharger', 'Present': 'Présenter', 'Updates': 'Mises à jour', 'Search': 'Rechercher', 'Hide panel': 'Masquer le panneau',
+  'Fit': 'Ajuster', 'Shortcuts': 'Raccourcis',
+  'PowerPoint (.pptx)': 'PowerPoint (.pptx)', 'editable text': 'texte modifiable', 'PDF — all slides': 'PDF — toutes les diapos',
+  'PNG — this slide': 'PNG — cette diapo', 'Deckly file (.deckly)': 'Fichier Deckly (.deckly)',
+  'Online': 'En ligne', 'No internet': 'Pas d’internet', 'Offline mode': 'Mode hors ligne',
+  'Searches also use the web. Click to work offline only.': 'Les recherches utilisent aussi le web. Cliquez pour travailler hors ligne uniquement.',
+  'Only the built-in library is used. Click to allow web search.': 'Seule la bibliothèque intégrée est utilisée. Cliquez pour autoriser la recherche web.',
+  'Online search on': 'Recherche en ligne activée',
+  'No internet right now — the built-in library still works': 'Pas d’internet pour l’instant — la bibliothèque intégrée fonctionne toujours',
+  'Offline mode: only the built-in library is used': 'Mode hors ligne : seule la bibliothèque intégrée est utilisée',
+  'Design opened': 'Création ouverte', 'This file could not be opened': 'Ce fichier n’a pas pu être ouvert',
+  // rail & panels
+  'Design': 'Design', 'Elements': 'Éléments', 'Text': 'Texte', 'Photos': 'Photos', 'Icons': 'Icônes', 'Stickers': 'Stickers',
+  'Logos': 'Logos', 'Uploads': 'Importations', 'Background': 'Arrière-plan',
+  'Search templates': 'Rechercher des modèles', 'Search shapes': 'Rechercher des formes', 'Search fonts': 'Rechercher des polices',
+  'Search photos': 'Rechercher des photos', 'Search 2,400+ icons': 'Rechercher parmi 2 400+ icônes', 'Search stickers': 'Rechercher des stickers',
+  'Search brand logos': 'Rechercher des logos de marques', 'Search your uploads': 'Rechercher dans vos importations', 'Search colours': 'Rechercher des couleurs',
+  'Add a slide': 'Ajouter une diapo', 'Templates': 'Modèles',
+  'Click a template to add all its slides, or a single slide to add just that one.': 'Cliquez sur un modèle pour ajouter toutes ses diapos, ou sur une seule diapo pour n’ajouter qu’elle.',
+  '{n} slides': '{n} diapos', 'Add this slide': 'Ajouter cette diapo',
+  '“{name}” applied': '« {name} » appliqué', '{n} slides added': '{n} diapos ajoutées',
+  'Lines': 'Lignes', 'Shapes': 'Formes', 'Photo frames': 'Cadres photo',
+  'Add a frame, then click a photo — it fills the selected frame.': 'Ajoutez un cadre, puis cliquez sur une photo : elle remplit le cadre sélectionné.',
+  'See all': 'Tout voir', 'Charts & tables': 'Graphiques et tableaux', 'Bar chart': 'Graphique en barres', 'Progress bars': 'Barres de progression',
+  'Timeline': 'Frise chronologique', 'Table': 'Tableau', 'Frame': 'Cadre',
+  'Add a text box': 'Ajouter une zone de texte', 'Default text styles': 'Styles de texte', 'Add a heading': 'Ajouter un titre',
+  'Add a subheading': 'Ajouter un sous-titre', 'Add a little bit of body text': 'Ajouter un peu de texte', '• Add a bullet list': '• Ajouter une liste à puces',
+  '• First point<br>• Second point<br>• Third point': '• Premier point<br>• Deuxième point<br>• Troisième point',
+  'Font combinations': 'Associations de polices', 'Fonts on this computer': 'Polices sur cet ordinateur',
+  'Big launch': 'Grand lancement', 'Clear supporting line': 'Une phrase d’accroche claire', 'Elegant story': 'Récit élégant', 'With a classic touch': 'Avec une touche classique',
+  'MAKE IT LOUD': 'FAITES DU BRUIT', 'Strong, sporty and bold': 'Fort, sportif et audacieux', 'Hello friends': 'Bonjour les amis', 'Warm and playful': 'Chaleureux et ludique',
+  'Editorial look': 'Style éditorial', 'Calm and confident': 'Calme et assuré', 'Future ready': 'Prêt pour demain', 'Modern tech style': 'Style tech moderne',
+  'IMPACT': 'IMPACT', 'Heavy headline, light body': 'Titre fort, texte léger', 'Handwritten note': 'Note manuscrite', 'Friendly and personal': 'Amical et personnel',
+  'All': 'Tout', 'Library (offline)': 'Bibliothèque (hors ligne)', 'In your library': 'Dans votre bibliothèque',
+  'No photos in the library yet.': 'Pas encore de photos dans la bibliothèque.',
+  'Need more?': 'Besoin de plus ?',
+  'Type in the search box — when you are online, Deckly also searches millions of free photos on Wikimedia Commons and keeps the ones you use, so they work offline afterwards.': 'Tapez dans la recherche : en ligne, Deckly cherche aussi parmi des millions de photos libres sur Wikimedia Commons et garde celles que vous utilisez, pour qu’elles marchent ensuite hors ligne.',
+  'You are offline — showing only your library. Go online to search the web.': 'Vous êtes hors ligne : seule votre bibliothèque s’affiche. Connectez-vous pour chercher sur le web.',
+  'From the web (free licences)': 'Sur le web (licences libres)', 'Could not reach the web search.': 'La recherche web est injoignable.',
+  'Nothing found.': 'Aucun résultat.',
+  '{n} line icons on this computer. Pick a colour after adding.': '{n} icônes sur cet ordinateur. Choisissez la couleur après l’ajout.',
+  'More icons from the web': 'Plus d’icônes sur le web',
+  'Brand logos are trademarks of their owners — use them to refer to the brand.': 'Les logos sont des marques de leurs propriétaires : utilisez-les pour parler de la marque.',
+  'Upload images': 'Importer des images', 'Drop images here': 'Déposez des images ici', 'They stay on this computer.': 'Elles restent sur cet ordinateur.',
+  'Your uploads': 'Vos importations', 'Saved from the web': 'Gardées depuis le web',
+  'Photos you used from the web — kept for offline use.': 'Les photos du web que vous avez utilisées, gardées pour le hors ligne.',
+  'Nothing uploaded yet.': 'Rien d’importé pour l’instant.',
+  'Colour': 'Couleur', 'Custom colour': 'Couleur personnalisée', 'Gradients': 'Dégradés', 'Apply to all slides': 'Appliquer à toutes les diapos',
+  'Photo backgrounds': 'Photos d’arrière-plan',
+  'Photo placed in the frame': 'Photo placée dans le cadre', 'Downloading photo…': 'Téléchargement de la photo…', 'Could not download this photo': 'Impossible de télécharger cette photo',
+  '{n} images uploaded': '{n} images importées', 'Image uploaded': 'Image importée', 'Added — click any part to edit it': 'Ajouté : cliquez sur une partie pour la modifier',
+  'Milestone': 'Étape', 'Plan': 'Formule', 'Price': 'Prix', 'Users': 'Utilisateurs', 'Starter': 'Débutant', 'Team': 'Équipe', 'Business': 'Entreprise', 'Unlimited': 'Illimité',
+  // photo & sticker categories
+  'Nature': 'Nature', 'Mountains': 'Montagnes', 'Ocean': 'Océan', 'City': 'Ville', 'Technology': 'Technologie', 'Food': 'Cuisine', 'Travel': 'Voyage',
+  'Abstract': 'Abstrait', 'Flowers': 'Fleurs', 'Animals': 'Animaux', 'Space': 'Espace', 'Sports': 'Sport', 'Education': 'Éducation', 'Architecture': 'Architecture', 'Night': 'Nuit',
+  'Activities': 'Activités', 'Animals & Nature': 'Animaux et nature', 'Flags': 'Drapeaux', 'Food & Drink': 'Nourriture et boissons', 'Objects': 'Objets',
+  'People & Body': 'Personnes', 'Smileys & Emotion': 'Smileys et émotions', 'Symbols': 'Symboles', 'Travel & Places': 'Voyages et lieux', 'Other': 'Autres',
+  // shapes
+  'Square': 'Carré', 'Rounded square': 'Carré arrondi', 'Circle': 'Cercle', 'Triangle': 'Triangle', 'Right triangle': 'Triangle rectangle', 'Diamond': 'Losange',
+  'Pentagon': 'Pentagone', 'Hexagon': 'Hexagone', 'Octagon': 'Octogone', 'Star': 'Étoile', 'Sparkle': 'Scintillement', 'Burst': 'Explosion', 'Heart': 'Cœur',
+  'Arrow': 'Flèche', 'Arrow left': 'Flèche gauche', 'Chevron': 'Chevron', 'Tag': 'Étiquette', 'Plus': 'Plus', 'Parallelogram': 'Parallélogramme', 'Trapezoid': 'Trapèze',
+  'Speech bubble': 'Bulle', 'Thought cloud': 'Nuage de pensée', 'Arch': 'Arche', 'Half circle': 'Demi-cercle', 'Quarter circle': 'Quart de cercle', 'Ring': 'Anneau',
+  'Blob': 'Tache', 'Pebble': 'Galet', 'Wave band': 'Vague', 'Cross': 'Croix', 'Line': 'Ligne', 'Arrow line': 'Ligne fléchée', 'Dashed line': 'Ligne en tirets', 'Dotted line': 'Ligne pointillée',
+  // slide layouts
+  'Blank': 'Vide', 'Title': 'Titre', 'Title + text': 'Titre + texte', 'Two columns': 'Deux colonnes', 'Image + text': 'Image + texte',
+  'Add a title': 'Ajouter un titre', 'Add a subtitle': 'Ajouter un sous-titre', 'Section title': 'Titre de section',
+  'Write your points here.<br>Each line becomes a new idea.': 'Écrivez vos points ici.<br>Chaque ligne devient une nouvelle idée.',
+  'Compare': 'Comparer', 'Option A': 'Option A', 'Option B': 'Option B', 'Big idea': 'Grande idée', 'Explain it in one or two short sentences.': 'Expliquez-la en une ou deux phrases courtes.',
+  // context bar
+  'Background colour': 'Couleur d’arrière-plan', 'More backgrounds': 'Plus d’arrière-plans', 'Backgrounds': 'Arrière-plans',
+  'Duplicate slide': 'Dupliquer la diapo', 'Delete slide': 'Supprimer la diapo',
+  'Tip: click an element to edit it · double-click text to type': 'Astuce : double-cliquez sur un texte pour écrire',
+  '{n} selected': '{n} sélectionnés', 'Align left': 'Aligner à gauche', 'Align centre': 'Centrer', 'Align right': 'Aligner à droite',
+  'Align top': 'Aligner en haut', 'Align middle': 'Centrer verticalement', 'Align bottom': 'Aligner en bas',
+  'Space evenly across': 'Répartir horizontalement', 'Space evenly down': 'Répartir verticalement',
+  'Text colour': 'Couleur du texte', 'Bold': 'Gras', 'Italic': 'Italique', 'Underline': 'Souligné', 'Strikethrough': 'Barré', 'Uppercase': 'Majuscules',
+  'Alignment': 'Alignement', 'Spacing': 'Espacement', 'Effects': 'Effets', 'Line colour': 'Couleur de la ligne', 'Thickness': 'Épaisseur',
+  'Border': 'Bordure', 'Corner rounding': 'Arrondi des coins', 'Change shape': 'Changer de forme', 'Shape': 'Forme', 'Icon colour': 'Couleur de l’icône',
+  'Line weight': 'Épaisseur du trait', 'Replace photo': 'Remplacer la photo', 'Replace': 'Remplacer', 'Adjust': 'Ajuster', 'Frame shape': 'Forme du cadre',
+  'Crop focus': 'Cadrage', 'Flip': 'Retourner', 'Set as background': 'Mettre en arrière-plan', 'Sticker': 'Sticker', 'Logo': 'Logo', 'Icon': 'Icône', 'Element': 'Élément',
+  'Position & layers': 'Position et calques', 'Position': 'Position', 'Transparency': 'Transparence', 'Drop shadow': 'Ombre portée',
+  'Duplicate': 'Dupliquer', 'Duplicate (Ctrl+D)': 'Dupliquer (Ctrl+D)', 'Lock': 'Verrouiller', 'Unlock': 'Déverrouiller',
+  'Letter spacing': 'Espacement des lettres', 'Line height': 'Interligne', 'Border colour': 'Couleur de bordure', 'Rounding': 'Arrondi',
+  'Click or drop any photo — it replaces the selected one': 'Cliquez ou déposez une photo : elle remplace celle sélectionnée',
+  'Rounded corners': 'Coins arrondis', 'Which part of the photo to keep': 'Quelle partie de la photo garder', 'Left ↔ right': 'Gauche ↔ droite', 'Top ↕ bottom': 'Haut ↕ bas',
+  'Photo set as background': 'Photo mise en arrière-plan', 'Select 3 or more elements': 'Sélectionnez au moins 3 éléments',
+  'Fonts (offline)': 'Polices (hors ligne)', 'Text effects': 'Effets de texte', 'Shadow': 'Ombre', 'Outline': 'Contour', 'Highlight behind text': 'Surligner derrière le texte',
+  'Highlight / outline colour': 'Couleur du surlignage / contour', 'Quick looks': 'Styles rapides', 'Original': 'Original', 'B&W': 'N&B', 'Warm': 'Chaud',
+  'Cool': 'Froid', 'Vivid': 'Vif', 'Fade': 'Délavé', 'Brightness': 'Luminosité', 'Contrast': 'Contraste', 'Saturation': 'Saturation', 'Black & white': 'Noir et blanc', 'Blur': 'Flou',
+  'Layers': 'Calques', 'Bring to front': 'Mettre au premier plan', 'Forward': 'Avancer', 'Backward': 'Reculer', 'Send to back': 'Mettre à l’arrière-plan',
+  'Align on the slide': 'Aligner sur la diapo',
+  // slides strip
+  'Add slide': 'Ajouter', 'Slide options': 'Options de la diapo', 'Move left': 'Déplacer à gauche', 'Move right': 'Déplacer à droite',
+  'Slide deleted — Ctrl+Z to undo': 'Diapo supprimée — Ctrl+Z pour annuler',
+  // colours / ui
+  'Recently used': 'Utilisées récemment', 'Colours': 'Couleurs', 'Keyboard shortcuts': 'Raccourcis clavier', 'Got it': 'Compris',
+  'Add text': 'Ajouter du texte', 'Edit selected text': 'Modifier le texte sélectionné', 'Stop editing': 'Arrêter la modification', 'Undo / Redo': 'Annuler / Rétablir',
+  'Copy / Paste': 'Copier / Coller', 'Select all': 'Tout sélectionner', 'Nudge (×10 with Shift)': 'Déplacer (×10 avec Maj)', 'Duplicate while dragging': 'Dupliquer en glissant',
+  'No snapping while dragging': 'Glisser sans aimantation', 'Free resize (images) / keep ratio (shapes)': 'Redimensionner librement (images) / garder les proportions (formes)',
+  'Zoom': 'Zoom', 'Fit to screen': 'Ajuster à l’écran', 'Alt + drag': 'Alt + glisser', 'Ctrl + drag': 'Ctrl + glisser', 'Shift + corner': 'Maj + coin', 'Ctrl + wheel': 'Ctrl + molette',
+  // output
+  'Preparing image…': 'Préparation de l’image…', 'Could not create the image': 'Impossible de créer l’image', 'Preparing PDF…': 'Préparation du PDF…',
+  'PDF downloaded': 'PDF téléchargé', 'Could not create the PDF': 'Impossible de créer le PDF', 'Preparing PowerPoint…': 'Préparation du PowerPoint…',
+  'PowerPoint downloaded': 'PowerPoint téléchargé', 'Could not create the PowerPoint file': 'Impossible de créer le fichier PowerPoint', 'Saved as a file': 'Enregistré comme fichier',
+  'slide': 'diapo', 'presentation': 'présentation',
+  // updates
+  'Keep Deckly up to date': 'Gardez Deckly à jour',
+  'New versions bring new features and fixes. Deckly looks for them only when your computer is connected to the internet.': 'Les nouvelles versions apportent des nouveautés et des corrections. Deckly les cherche seulement quand votre ordinateur est connecté à internet.',
+  'Update automatically': 'Mettre à jour automatiquement', 'Recommended': 'Recommandé',
+  'Updates download in the background and install the next time you close Deckly. You never lose your work.': 'Les mises à jour se téléchargent en arrière-plan et s’installent la prochaine fois que vous fermez Deckly. Vous ne perdez jamais votre travail.',
+  'Ask me each time': 'Me demander à chaque fois',
+  'Deckly tells you when a new version is out, and you choose when to install it.': 'Deckly vous prévient quand une nouvelle version sort, et vous choisissez quand l’installer.',
+  'You can change this any time with the Updates button on the home screen, or File → Update settings.': 'Vous pouvez changer ce choix à tout moment avec le bouton Mises à jour de l’accueil, ou Fichier → Réglages des mises à jour.',
+  'Confirm': 'Confirmer', 'Automatic updates are on': 'Mises à jour automatiques activées', 'Deckly will ask you before each update': 'Deckly vous demandera avant chaque mise à jour',
+  'Looking for updates…': 'Recherche de mises à jour…', 'Deckly {v} is available': 'Deckly {v} est disponible',
+  'We recommend installing it: it brings the latest improvements and fixes.': 'Nous vous recommandons de l’installer : elle apporte les dernières améliorations et corrections.',
+  'Update now': 'Mettre à jour', 'Later': 'Plus tard', 'Downloading the update…': 'Téléchargement de la mise à jour…',
+  'Deckly {v} is ready': 'Deckly {v} est prête', 'Restart to finish. Your designs are saved.': 'Redémarrez pour terminer. Vos créations sont enregistrées.',
+  'Otherwise it installs when you close Deckly.': 'Sinon, elle s’installera quand vous fermerez Deckly.', 'Restart now': 'Redémarrer',
+  'You have the latest version ({v})': 'Vous avez la dernière version ({v})',
+  'Could not check for updates. Are you connected to the internet?': 'Impossible de vérifier les mises à jour. Êtes-vous connecté à internet ?',
+  'Updates work in the installed app': 'Les mises à jour fonctionnent dans l’application installée',
+  'Reminder: updating is recommended. File → Check for updates.': 'Rappel : la mise à jour est recommandée. Fichier → Rechercher des mises à jour.',
+  // templates (names, tags and sample content)
+  'Bold Pitch': 'Pitch audacieux', 'Clean Report': 'Rapport épuré', 'Travel Story': 'Carnet de voyage', 'Playful Lesson': 'Leçon ludique',
+  'Product Launch': 'Lancement produit', 'Elegant Portfolio': 'Portfolio élégant', 'Team Update': 'Point d’équipe', 'Green Future': 'Avenir vert',
+  'Report': 'Rapport', 'Personal': 'Personnel', 'Marketing': 'Marketing', 'Creative': 'Créatif', 'Work': 'Travail', 'Nonprofit': 'Association',
+  'SEED ROUND 2026': 'LEVÉE DE FONDS 2026', 'Making clean energy simple for every home.': 'L’énergie propre, simple pour chaque foyer.',
+  'Let’s talk': 'Parlons-en', 'The problem': 'Le problème', 'Energy bills rose 38% in 3 years': 'Les factures ont pris 38 % en 3 ans',
+  'Installers book 6 months ahead': 'Les installateurs sont pris 6 mois à l’avance', 'Homeowners don’t know where to start': 'Les propriétaires ne savent pas par où commencer',
+  'Traction': 'Croissance', 'homes': 'foyers', 'rating': 'note', 'revenue': 'chiffre d’affaires', 'Thank you': 'Merci',
+  'Annual Report': 'Rapport annuel', 'Results, lessons and what comes next — 2026': 'Résultats, leçons et prochaines étapes — 2026', 'Highlights': 'Points forts',
+  '• Revenue grew 24% year over year<br>• Two new offices opened<br>• Customer satisfaction at an all-time high': '• Chiffre d’affaires en hausse de 24 %<br>• Deux nouveaux bureaux ouverts<br>• Satisfaction client record',
+  '“Simplicity is the ultimate sophistication.”': '« La simplicité est la sophistication suprême. »', '— Our design principle': '— Notre principe de design',
+  'ADVENTURE AWAITS': 'L’AVENTURE VOUS ATTEND', 'Into the Wild': 'Grand air', 'A two-week journey through the mountains': 'Deux semaines à travers les montagnes',
+  'Day 1 — Arrival': 'Jour 1 — Arrivée', 'We landed at dawn, grabbed coffee in the old town and drove straight to the valley.': 'Arrivés à l’aube, un café dans la vieille ville, puis direction la vallée.',
+  'Alpine valley': 'Vallée alpine', 'Best moment': 'Meilleur moment', 'Sunset by the lake': 'Coucher de soleil sur le lac', 'Nothing beats the silence after a long hike.': 'Rien ne vaut le silence après une longue randonnée.',
+  'Science Class': 'Cours de sciences', 'Let’s explore the water cycle!': 'Découvrons le cycle de l’eau !', 'Unit 3 · Week 2': 'Unité 3 · Semaine 2',
+  'The 4 stages': 'Les 4 étapes', 'Evaporation': 'Évaporation', 'Condensation': 'Condensation', 'Precipitation': 'Précipitations', 'Collection': 'Ruissellement',
+  'Quiz time! 🎉': 'C’est l’heure du quiz ! 🎉', 'What makes clouds form?': 'Comment se forment les nuages ?',
+  'INTRODUCING': 'DÉCOUVREZ', 'The fastest way to plan your week.': 'La façon la plus rapide de planifier votre semaine.', 'Why you’ll love it': 'Pourquoi vous allez l’adorer',
+  'Smart suggestions': 'Suggestions intelligentes', 'Private by design': 'Privé par conception', 'Works offline': 'Fonctionne hors ligne',
+  'Short line that explains the benefit.': 'Une phrase courte qui explique l’avantage.', 'Available today': 'Disponible dès aujourd’hui', 'novax.example · $9 / month': 'novax.example · 9 € / mois',
+  'Selected work': 'Projets choisis', 'Studio Loft': 'Loft atelier', 'City Lines': 'Lignes urbaines', 'Texture Study': 'Étude de textures', 'Let’s create together': 'Créons ensemble',
+  'Weekly Team Update': 'Point d’équipe hebdo', 'Product & Engineering · Week 47': 'Produit et tech · Semaine 47', 'Agenda': 'Ordre du jour',
+  'Wins of the week': 'Réussites de la semaine', 'Metrics review': 'Revue des chiffres', 'Blockers': 'Points bloquants', 'Next steps': 'Prochaines étapes', 'Questions?': 'Des questions ?',
+  'Protect what we love': 'Protégeons la nature', 'Our 2030 plan for cleaner rivers and greener cities.': 'Notre plan 2030 pour des rivières propres et des villes plus vertes.',
+  'Our impact': 'Notre impact', 'trees planted': 'arbres plantés', 'rivers cleaned': 'rivières nettoyées', 'volunteers': 'bénévoles',
+  'Development': 'Développement', 'Q1': 'T1', 'Q2': 'T2', 'Q3': 'T3', 'Q4': 'T4', 'Q5': 'T5',
+};
