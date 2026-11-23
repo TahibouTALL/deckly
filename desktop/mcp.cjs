@@ -9,7 +9,8 @@ const http = require('node:http');
 const os = require('node:os');
 const { spawn } = require('node:child_process');
 
-const VERSION = (() => { try { return require(path.join(__dirname, '..', 'package.json')).version; } catch { return '0.0.0'; } })();
+// the version: package.json in development, the app's connector file once installed (package.json then lives inside the archive)
+const VERSION = (() => { try { return require(path.join(__dirname, '..', 'package.json')).version; } catch { try { return JSON.parse(fs.readFileSync(path.join(process.env.DECKLY_DATA_DIR || path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'Deckly'), 'connector.json'), 'utf8')).version || '1.3'; } catch { return '1.3'; } } })();
 const dataDir = process.env.DECKLY_DATA_DIR || path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'Deckly');
 const connFile = path.join(dataDir, 'connector.json');
 
