@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' data: blob: https://commons.wikimedia.org https://upload.wikimedia.org https://api.iconify.design; font-src 'self' data:; object-src 'none'; base-uri 'none'">
 <title>Deckly</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236C4CF5'/%3E%3Cstop offset='1' stop-color='%23FF6B8B'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Crect x='8' y='9' width='16' height='11' rx='2.5' fill='white'/%3E%3Crect x='11' y='22' width='10' height='2.5' rx='1.25' fill='white' opacity='.8'/%3E%3C/svg%3E">
+<link rel="icon" href="assets/brand/mark.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/fonts/fonts.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
@@ -13,9 +14,10 @@
 <!-- HOME -->
 <section id="home" class="home">
   <header class="home-top">
-    <div class="brand"><span class="brand-mark"></span>Deckly</div>
+    <a class="brand" href="#" aria-label="Deckly"><img src="assets/brand/logo.svg" alt="Deckly" height="34"></a>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn ghost lang-btn" title="Language"><i data-ic="languages"></i>Language</button>
+      <button class="btn ghost desktop-only hidden" id="homeClaude" title="Connect Claude to Deckly"><i data-ic="plug-zap"></i>Claude</button>
       <button class="btn ghost desktop-only hidden" id="homeUpdates"><i data-ic="refresh-cw"></i>Updates</button>
       <div class="net-pill" id="netPillHome"></div>
     </div>
@@ -26,60 +28,62 @@
     <div class="size-cards" id="sizeCards"></div>
   </div>
   <div class="home-section">
-    <h2>Start from a template</h2>
-    <div class="tpl-grid" id="homeTemplates"></div>
-  </div>
-  <div class="home-section">
     <div class="row-between"><h2>Your designs</h2>
       <button class="btn ghost" id="openFileHome"><i data-ic="folder-open"></i>Open a Deckly file (.dkly)</button></div>
     <div class="chips folder-bar" id="folderBar"></div>
     <div class="recent-grid" id="recentGrid"></div>
+  </div>
+  <div class="home-section">
+    <h2>Start from a template</h2>
+    <div class="tpl-grid" id="homeTemplates"></div>
   </div>
 </section>
 
 <!-- EDITOR -->
 <section id="editor" class="editor hidden">
   <header class="topbar">
-    <button class="tb-btn" id="homeBtn" title="Home"><span class="brand-mark sm"></span></button>
+    <button class="tb-btn" id="homeBtn" title="Home"><img src="assets/brand/mark.svg" alt="" class="brand-mark"></button>
     <div class="menu-wrap">
       <button class="tb-btn text" id="fileMenuBtn">File <i data-ic="chevron-down"></i></button>
-      <div class="menu" id="fileMenu">
-        <button data-act="new"><i data-ic="file-plus"></i>New design</button>
-        <button data-act="open"><i data-ic="folder-open"></i>Open file…</button>
-        <button data-act="save"><i data-ic="save"></i>Save as a Deckly file (.dkly)</button>
-        <button data-act="save-show"><i data-ic="presentation"></i>Save as a slideshow (.dkly, opens in Present mode)</button>
-        <button data-act="resize"><i data-ic="scaling"></i>Magic resize…</button>
-        <button data-act="versions"><i data-ic="history"></i>Version history…</button>
-        <button data-act="save-template"><i data-ic="bookmark-plus"></i>Save as my template…</button>
+      <div class="menu" id="fileMenu" role="menu">
+        <button data-act="new"><i data-ic="file-plus"></i><span>New design</span><kbd>Ctrl N</kbd></button>
+        <button data-act="open"><i data-ic="folder-open"></i><span>Open file…</span><kbd>Ctrl O</kbd></button>
+        <button data-act="save"><i data-ic="save"></i><span>Save as a Deckly file (.dkly)</span><kbd>Ctrl S</kbd></button>
+        <button data-act="save-show"><i data-ic="presentation"></i><span>Save as a slideshow</span><small>Opens straight in Present mode</small></button>
         <hr>
-        <button data-act="download"><i data-ic="download"></i>Download… (all formats, high resolution)</button>
-        <button data-act="png"><i data-ic="image"></i>Download this slide (PNG)</button>
-        <button data-act="pngt"><i data-ic="image-off"></i>PNG with transparent background</button>
-        <button data-act="pdf"><i data-ic="file-text"></i>Download all slides (PDF)</button>
-        <button data-act="pptx"><i data-ic="presentation"></i>Download PowerPoint (.pptx)</button>
+        <button data-act="download"><i data-ic="download"></i><span>Export…</span><small>PowerPoint, PDF, PNG, JPG, SVG — up to 4K</small><kbd>Ctrl E</kbd></button>
+        <button data-act="pptx"><i data-ic="presentation"></i><span>Export to PowerPoint (.pptx)</span></button>
+        <button data-act="pdf"><i data-ic="file-text"></i><span>Export to PDF</span></button>
+        <button data-act="png"><i data-ic="image"></i><span>Export this slide (PNG)</span></button>
         <hr>
-        <button data-act="language"><i data-ic="languages"></i>Language</button>
+        <button data-act="resize"><i data-ic="scaling"></i><span>Magic resize…</span></button>
+        <button data-act="versions"><i data-ic="history"></i><span>Version history…</span></button>
+        <button data-act="save-template"><i data-ic="bookmark-plus"></i><span>Save as my template…</span></button>
+        <hr>
+        <button data-act="claude" class="desktop-only hidden"><i data-ic="plug-zap"></i><span>Connect Claude…</span><small>Let Claude create and edit your presentations</small></button>
+        <button data-act="credits"><i data-ic="badge-info"></i><span>Credits &amp; licences</span></button>
+        <button data-act="language"><i data-ic="languages"></i><span>Language</span></button>
         <hr class="desktop-only hidden">
-        <button data-act="check-updates" class="desktop-only hidden"><i data-ic="refresh-cw"></i>Check for updates</button>
-        <button data-act="update-settings" class="desktop-only hidden"><i data-ic="settings"></i>Update settings…</button>
+        <button data-act="check-updates" class="desktop-only hidden"><i data-ic="refresh-cw"></i><span>Check for updates</span></button>
+        <button data-act="update-settings" class="desktop-only hidden"><i data-ic="settings"></i><span>Update settings…</span></button>
       </div>
     </div>
     <button class="tb-btn" id="undoBtn" title="Undo (Ctrl+Z)"><i data-ic="undo-2"></i></button>
     <button class="tb-btn" id="redoBtn" title="Redo (Ctrl+Y)"><i data-ic="redo-2"></i></button>
-    <span class="save-state" id="saveState"><i data-ic="cloud-check"></i>Saved</span>
+    <span class="save-state" id="saveState"><i data-ic="hard-drive"></i>Saved</span>
     <div class="tb-spacer"></div>
-    <input class="title-input" id="titleInput" spellcheck="false">
+    <input class="title-input" id="titleInput" spellcheck="false" aria-label="Title">
     <div class="tb-spacer"></div>
     <div class="net-pill" id="netPill"></div>
-    <button class="btn ghost-light" id="downloadBtn"><i data-ic="download"></i>Download</button>
+    <button class="btn ghost" id="downloadBtn"><i data-ic="download"></i>Export</button>
     <button class="btn primary" id="presentBtn"><i data-ic="play"></i>Present</button>
   </header>
 
   <div class="workspace">
-    <nav class="rail" id="rail"></nav>
+    <nav class="rail" id="rail" role="tablist"></nav>
     <aside class="panel" id="panel">
       <div class="panel-head">
-        <div class="search"><i data-ic="search"></i><input id="panelSearch" placeholder="Search"><button class="x" id="searchClear"><i data-ic="x"></i></button></div>
+        <div class="search"><i data-ic="search"></i><input id="panelSearch" placeholder="Search" aria-label="Search"><button class="x" id="searchClear" aria-label="Clear"><i data-ic="x"></i></button></div>
       </div>
       <div class="panel-body" id="panelBody"></div>
       <button class="panel-collapse" id="panelCollapse" title="Hide panel"><i data-ic="chevron-left"></i></button>
@@ -99,9 +103,10 @@
         <div class="slides-strip" id="slidesStrip"></div>
         <div class="zoom">
           <button class="tb-btn sm notes-btn" id="notesBtn" title="Speaker notes"><i data-ic="notebook-pen"></i><span>Notes</span></button>
-          <button class="tb-btn sm" id="zoomOut"><i data-ic="minus"></i></button>
+          <button class="tb-btn sm" id="gridViewBtn" title="Slide grid"><i data-ic="layout-grid"></i></button>
+          <button class="tb-btn sm" id="zoomOut" title="Zoom out"><i data-ic="minus"></i></button>
           <button class="zoom-val" id="zoomVal">Fit</button>
-          <button class="tb-btn sm" id="zoomIn"><i data-ic="plus"></i></button>
+          <button class="tb-btn sm" id="zoomIn" title="Zoom in"><i data-ic="plus"></i></button>
           <button class="tb-btn sm" id="helpBtn" title="Shortcuts"><i data-ic="keyboard"></i></button>
         </div>
       </footer>
@@ -119,18 +124,19 @@
     <div class="pv-label">Next slide</div>
     <div class="pv-next" id="pvNext"></div>
   </aside>
-  <div class="present-hud"><button id="pPrev"><i data-ic="chevron-left"></i></button><span id="pCount"></span><button id="pNext"><i data-ic="chevron-right"></i></button><button id="pPresenter" title="Show / hide presenter view (P)"><i data-ic="notebook-pen"></i></button><button id="pExit"><i data-ic="x"></i></button></div>
+  <div class="present-hud"><button id="pPrev" aria-label="Previous"><i data-ic="chevron-left"></i></button><span id="pCount"></span><button id="pNext" aria-label="Next"><i data-ic="chevron-right"></i></button><button id="pPresenter" title="Show / hide presenter view (P)"><i data-ic="notebook-pen"></i></button><button id="pExit" aria-label="Exit"><i data-ic="x"></i></button></div>
 </div>
 
-<div class="popover hidden" id="popover"></div>
-<div class="toast" id="toast"></div>
-<div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
+<div class="popover hidden" id="popover" role="dialog"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true"><div class="modal-card" id="modalCard"></div></div>
 <input type="file" id="fileOpen" accept=".dkly,.deckly" hidden>
-<input type="file" id="fileUpload" accept="image/*" multiple hidden>
+<input type="file" id="fileUpload" accept="image/*,video/mp4,video/webm,audio/*" multiple hidden>
 
 <script src="vendor/html-to-image.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/pptxgen.bundle.js"></script>
+<script src="vendor/qrcode.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

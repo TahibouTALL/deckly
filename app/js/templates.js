@@ -2,10 +2,11 @@
 import { uid } from './store.js';
 import { photoBy } from './assets.js';
 import { t as tr } from './i18n.js';
+import { makeLine } from './elements/line.js';
 
 const T = (html, x, y, w, size, o = {}) => ({ id: uid(), type: 'text', html: tr(html), x, y, w, h: size * 1.3, size, font: o.font || 'Inter', color: o.color || '#1E1F2B', bold: !!o.bold, italic: !!o.italic, align: o.align || 'left', lineHeight: o.lh || 1.2, spacing: o.sp || 0, upper: !!o.upper, highlight: o.hl, rot: 0, opacity: o.op ?? 1 });
 const S = (shape, x, y, w, h, fill, o = {}) => ({ id: uid(), type: 'shape', shape, x, y, w, h, fill, stroke: o.stroke, strokeWidth: o.sw || 0, radius: o.r, rot: o.rot || 0, opacity: o.op ?? 1 });
-const L = (shape, x, y, w, color, sw = 6) => ({ id: uid(), type: 'shape', shape, x, y, w, h: sw * 6, stroke: color, strokeWidth: sw, rot: 0, opacity: 1 });
+const L = (shape, x, y, w, color, sw = 6) => makeLine(x, y + sw * 3, x + w, y + sw * 3, { id: uid(), stroke: color, strokeWidth: sw, capEnd: shape === 'arrowLine' ? 'arrow' : 'none', dash: shape === 'dashLine' ? 'dashed' : shape === 'dotLine' ? 'dotted' : 'solid', rot: 0, opacity: 1 });
 const I = (name, x, y, s, color, sw = 2) => ({ id: uid(), type: 'icon', name, x, y, w: s, h: s, color, sw, rot: 0, opacity: 1 });
 const P = (cat, i, x, y, w, h, o = {}) => {
   const src = photoBy(cat, i);

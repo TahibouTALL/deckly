@@ -33,7 +33,8 @@ export async function packDkly(doc, { presentOnOpen = false, appVersion = '' } =
     if (!src || src.startsWith('media/')) return src;
     if (media.has(src)) return media.get(src);
     const { buf, mime } = await toBytes(src);
-    const path = `media/${await hash(buf)}.${extOf(mime)}`;
+    const ext = extOf(mime) !== 'bin' ? extOf(mime) : (/\.(png|jpe?g|webp|gif|svg)(\?|$)/i.exec(src)?.[1] || 'bin').toLowerCase().replace('jpeg', 'jpg');
+    const path = `media/${await hash(buf)}.${ext}`;
     if (!zip.file(path)) zip.file(path, buf, { compression: mime === 'image/png' || mime === 'image/svg+xml' ? 'DEFLATE' : 'STORE' });
     media.set(src, path);
     return path;
@@ -41,11 +42,11 @@ export async function packDkly(doc, { presentOnOpen = false, appVersion = '' } =
   for (const s of d.slides) {
     if (s.bg?.type === 'image') s.bg.value = await add(s.bg.value);
     for (const el of s.elements) {
-      if (el.type === 'image') { el.src = await add(el.src); if (el.origSrc) el.origSrc = await add(el.origSrc); }
+      if (el.src && typeof el.src === 'string') { el.src = await add(el.src); if (el.origSrc) el.origSrc = await add(el.origSrc); }
     }
   }
   // custom fonts used by the design (the built-in ones are in every copy of Deckly)
-  const used = new Set(d.slides.flatMap((s) => s.elements.filter((e) => e.type === 'text').map((e) => e.font)));
+  const used = new Set(d.slides.flatMap((s) => s.elements.flatMap((e) => [e.font, e.text?.font, e.style?.font, e.opts?.font].filter(Boolean))));
   const fonts = [];
   for (const f of (await libAll()).filter((x) => x.kind === 'font' && used.has(x.name))) {
     const { buf } = await toBytes(f.data);
@@ -74,6 +75,7 @@ export async function unpackDkly(buffer) {
     if (!ref || !ref.startsWith('media/')) return ref;
     if (cache.has(ref)) return cache.get(ref);
     const f = zip.file(ref); if (!f) return ref;
+    if ((f._data?.uncompressedSize || 0) > 80e6) return ref; // a single picture over 80 MB is left out
     const ext = ref.split('.').pop();
     const mime = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml' }[ext] || 'application/octet-stream';
     const url = `data:${mime};base64,${b64(await f.async('arraybuffer'))}`;
@@ -81,7 +83,7 @@ export async function unpackDkly(buffer) {
   };
   for (const s of doc.slides) {
     if (s.bg?.type === 'image') s.bg.value = await back(s.bg.value);
-    for (const el of s.elements) if (el.type === 'image') { el.src = await back(el.src); if (el.origSrc) el.origSrc = await back(el.origSrc); }
+    for (const el of s.elements) if (el.src && typeof el.src === 'string') { el.src = await back(el.src); if (el.origSrc) el.origSrc = await back(el.origSrc); }
   }
   // embedded fonts: install them in this copy of Deckly
   for (const f of manifest.fonts || []) {
@@ -90,7 +92,7 @@ export async function unpackDkly(buffer) {
     try {
       const face = new FontFace(f.name, `url(${data})`); await face.load(); document.fonts.add(face);
       if (!packs.fonts.includes(f.name)) packs.fonts.push(f.name);
-      await libPut({ id: 'font-' + f.name, kind: 'font', t: Date.now(), name: f.name, data });
+      if (!(await libAll()).some((x) => x.kind === 'font' && x.name === f.name)) await libPut({ id: 'font-' + f.name, kind: 'font', t: Date.now(), name: f.name, data });
     } catch { /* unreadable font: the text falls back to Inter */ }
   }
   doc.id = uid(); doc.updated = Date.now();

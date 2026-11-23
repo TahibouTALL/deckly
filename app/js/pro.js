@@ -61,8 +61,11 @@ export function brandPanel(body, addItem) {
   body.querySelector('#brandApply').onclick = () => {
     if (!brand.heading && !brand.body) { toast('Choose your brand fonts first'); return; }
     let n = 0;
-    for (const s of state.doc.slides) for (const el of s.elements) if (el.type === 'text') {
-      const f = el.size >= 60 ? brand.heading : brand.body; if (f) { el.font = f; n++; }
+    for (const s of state.doc.slides) for (const el of s.elements) {
+      if (el.type === 'text') { const f = el.size >= 60 ? brand.heading : brand.body; if (f) { el.font = f; n++; } }
+      else if (el.type === 'table' && brand.body) { el.style.font = brand.body; n++; }
+      else if (el.type === 'chart' && brand.body) { el.opts.font = brand.body; n++; }
+      else if (el.type === 'shape' && el.text && brand.body) { el.text.font = brand.body; n++; }
     }
     commit(); emit('all'); toast(tr('Brand fonts applied to {n} texts', { n }));
   };
@@ -85,8 +88,13 @@ function applyColor(c) {
   const els = selected();
   if (!els.length) { curSlide().bg = { type: 'color', value: c }; commit(); emit('canvas'); return; }
   for (const el of els) {
-    if (el.type === 'text') el.color = c; else if (el.type === 'icon') el.color = c;
-    else if (el.type === 'shape') { if (el.shape && /line|Line/.test(el.shape)) el.stroke = c; else el.fill = c; }
+    if (el.type === 'text' || el.type === 'icon') el.color = c;
+    else if (el.type === 'shape') { delete el.gradient; el.fill = c; }
+    else if (el.type === 'line') el.stroke = c;
+    else if (el.type === 'draw') { if (el.fill && el.fill !== 'none') el.fill = c; else el.stroke = c; }
+    else if (el.type === 'table') el.style.headerFill = c;
+    else if (el.type === 'qr') el.fg = c;
+    else if (el.type === 'chart') { el.opts.colors = [c, ...(el.opts.colors || []).slice(1)]; }
   }
   commit(); emit('canvas');
 }

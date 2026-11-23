@@ -14,10 +14,13 @@ export function setLang(l) {
 
 // t('Hello {name}', {name}) — unknown strings fall back to English
 export function t(s, vars) {
-  let out = lang === 'fr' ? (FR[s] ?? s) : s;
+  let out = lang === 'fr' ? typo(FR[s] ?? s) : s;
   if (vars) for (const [k, v] of Object.entries(vars)) out = out.split(`{${k}}`).join(v);
   return out;
 }
+
+// French typography: no line break before ? ! ; : or inside « »
+const typo = (s) => (typeof s === 'string' && / [?!;:»]|« /.test(s) ? s.replace(/ ([?!;])/g, ' $1').replace(/ :/g, ' :').replace(/« /g, '« ').replace(/ »/g, ' »') : s);
 
 // Translate the static HTML (text nodes, title and placeholder attributes)
 export function translateDom(root = document.body) {
@@ -26,10 +29,10 @@ export function translateDom(root = document.body) {
   const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
   for (const n of nodes) {
     const k = n.nodeValue.trim();
-    if (k && FR[k]) n.nodeValue = n.nodeValue.replace(k, FR[k]);
+    if (k && FR[k]) n.nodeValue = n.nodeValue.replace(k, typo(FR[k]));
   }
   root.querySelectorAll('[title],[placeholder]').forEach((el) => {
-    for (const a of ['title', 'placeholder']) { const v = el.getAttribute(a); if (v && FR[v]) el.setAttribute(a, FR[v]); }
+    for (const a of ['title', 'placeholder']) { const v = el.getAttribute(a); if (v && FR[v]) el.setAttribute(a, typo(FR[v])); }
   });
 }
 
@@ -292,3 +295,7 @@ const FR = {
   'Our dishes': 'Nos plats', 'Tomato & basil soup': 'Soupe tomate et basilic', 'Roast chicken, herbs': 'Poulet rôti aux herbes', 'Wild mushroom risotto': 'Risotto aux champignons des bois', 'Lemon tart': 'Tarte au citron',
   'Development': 'Développement', 'Q1': 'T1', 'Q2': 'T2', 'Q3': 'T3', 'Q4': 'T4', 'Q5': 'T5',
 };
+
+// the strings of the 1.3 features (elements library, tables, charts, lines, drawing, Claude connector…)
+import { FR2 } from './i18n-more.js';
+Object.assign(FR, FR2);

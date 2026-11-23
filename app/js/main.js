@@ -1,6 +1,7 @@
-// App entry: home screen, opening designs, top bar, online/offline switch.
-import { state, emit, on, newDoc, resetHistory, saveDoc, loadDoc, listDocs, deleteDoc, undo, redo, canUndo, canRedo, commit, uid } from './store.js';
+// App entry: home screen, opening designs, top bar, online/offline switch, Claude connector, credits.
+import { state, emit, on, newDoc, resetHistory, saveDoc, loadDoc, listDocs, deleteDoc, undo, redo, canUndo, canRedo, commit, uid, flushSave, normalizeDoc } from './store.js';
 import { loadPacks, hydrateIcons, ic } from './assets.js';
+import { initLibrary } from './library.js';
 import { initEditor, setZoom, fit, select, stopEditing } from './editor.js';
 import { initPanels, openTab, renderPanel, applyTemplate } from './panels.js';
 import { initToolbar } from './toolbar.js';
@@ -8,10 +9,11 @@ import { initSlides } from './slides.js';
 import { TEMPLATES } from './templates.js';
 import { miniSlide } from './render.js';
 import { present, exportPng, exportPdf, exportPptx, saveFile, readFile, downloadDialog } from './output.js';
-import { toast, shortcutsModal, popover, closePopover, modal, closeModal } from './ui.js';
+import { toast, shortcutsModal, popover, closePopover, modal, closeModal, confirmPopover } from './ui.js';
 import { initUpdates, askChoice, checkNow } from './updates.js';
 import { t as tr, translateDom, lang, LANGS, setLang } from './i18n.js';
 import { loadBrand, resizeDialog, versionsDialog, snapshotVersion, userTemplates, saveAsTemplate, getFolders, addFolder, deleteFolder, askName } from './pro.js';
+import { initConnector } from './connector.js';
 let homeFolder = null;
 
 const $ = (s) => document.querySelector(s);
@@ -20,7 +22,7 @@ const SIZES = [
   ['Square post', '1:1 · 1080 × 1080', 1080, 1080], ['Story / mobile', '9:16 · 1080 × 1920', 1080, 1920], ['A4 document', 'Portrait · 1240 × 1754', 1240, 1754],
 ];
 
-await loadPacks();
+await Promise.all([loadPacks(), initLibrary()]);
 await loadBrand();
 hydrateIcons();
 translateDom(document.body);
@@ -29,17 +31,20 @@ initEditor(); initPanels(); initToolbar(); initSlides();
 wireTopbar();
 updateNet();
 initUpdates();
+initConnector({ openDoc, showHome });
 window.addEventListener('online', () => { state.online = true; updateNet(); });
 window.addEventListener('offline', () => { state.online = false; updateNet(); });
 try { state.onlineEnabled = localStorage.getItem('deckly-online') !== 'off'; } catch { /* */ }
 updateNet();
 
 const hashId = location.hash.slice(1);
-if (hashId && (await loadDoc(hashId))) openDoc(await loadDoc(hashId)); else showHome();
+const first = hashId && (await loadDoc(hashId));
+if (first) openDoc(first); else showHome();
 
 // ---------- home ----------
-async function showHome() {
+export async function showHome() {
   if (state.editingId) stopEditing();
+  await flushSave();
   $('#editor').classList.add('hidden'); $('#home').classList.remove('hidden');
   history.replaceState(null, '', location.pathname);
   $('#sizeCards').innerHTML = SIZES.map(([n, d, w, h], i) => {
@@ -48,7 +53,6 @@ async function showHome() {
   }).join('');
   $('#sizeCards').onclick = (e) => { const b = e.target.closest('[data-size]'); if (!b) return; const [, , w, h] = SIZES[b.dataset.size]; openDoc(newDoc(w, h), true); };
   const tg = $('#homeTemplates'); tg.innerHTML = '';
-  const probe = newDoc();
   for (const t of [...(await userTemplates()), ...TEMPLATES]) {
     const slides = t.build();
     const c = document.createElement('button'); c.className = 'tpl-card';
@@ -59,7 +63,6 @@ async function showHome() {
     c.onclick = () => { const d = newDoc(w, h, t.mine ? t.name : tr(t.name)); d.slides = slides; openDoc(d, true); };
     tg.appendChild(c);
   }
-  // folders
   const folders = await getFolders();
   if (homeFolder && !folders.some((f) => f.id === homeFolder)) homeFolder = null;
   $('#folderBar').innerHTML = [`<button class="chip ${!homeFolder ? 'on' : ''}" data-folder="">${ic('layout-grid')} ${tr('All')}</button>`,
@@ -76,28 +79,30 @@ async function showHome() {
   const docs = (await listDocs()).filter((d) => !homeFolder || d.folder === homeFolder).sort((a, b) => b.updated - a.updated);
   const rg = $('#recentGrid'); rg.innerHTML = docs.length ? '' : `<div class="empty-note">${tr(homeFolder ? 'This folder is empty. Move a design here with its folder button.' : 'Your designs will appear here. Everything is saved on this computer automatically.')}</div>`;
   for (const d of docs) {
-    const c = document.createElement('div'); c.className = 'recent-card'; c.style.cursor = 'pointer';
+    const c = document.createElement('div'); c.className = 'recent-card'; c.style.cursor = 'pointer'; c.tabIndex = 0;
     const ago = timeAgo(d.updated);
-    c.innerHTML = `<div class="thumb" style="display:flex;align-items:center;justify-content:center;background:#E9EAF1"></div><div class="meta"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(d.title)}</span><small>${ago}</small></div><button class="del" title="${tr('Delete')}">${ic('trash-2')}</button><button class="del mv" title="${tr('Move to a folder')}">${ic('folder-input')}</button>`;
+    c.innerHTML = `<div class="thumb" style="display:flex;align-items:center;justify-content:center;background:#E9EAF1"></div><div class="meta"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(d.title)}</span><small>${tr('{n} slides', { n: d.slides?.length || 1 })} · ${ago}</small></div><button class="del" title="${tr('Delete')}">${ic('trash-2')}</button><button class="del mv" title="${tr('More')}">${ic('ellipsis')}</button>`;
     const box = c.querySelector('.thumb');
     const ratio = d.w / d.h, bw = 300, bh = 300 / (16 / 9);
     const tw = ratio >= 16 / 9 ? bw : bh * ratio;
-    box.appendChild(miniSlide(d.slides[0], d, tw));
+    try { box.appendChild(miniSlide(d.slides[0], d, tw)); } catch { /* a damaged design still shows its card */ }
+    c.onkeydown = (e) => { if (e.key === 'Enter') openDoc(d); };
     c.onclick = (e) => {
       if (e.target.closest('.mv')) {
         e.stopPropagation();
-        popover(e.target.closest('.mv'), `<h4>${tr('Move to a folder')}</h4><div class="pop-list">${[{ id: '', name: tr('No folder') }, ...folders].map((f) => `<button data-to="${f.id}" class="${(d.folder || '') === f.id ? 'on' : ''}">${ic(f.id ? 'folder' : 'layout-grid')} ${escapeHtml(f.name)}</button>`).join('')}</div>${folders.length ? '' : `<p class="hint">${tr('Create a folder first with “New folder”.')}</p>`}`, (p) => {
-          p.onclick = async (ev) => { const b = ev.target.closest('[data-to]'); if (!b) return; closePopover(); if (b.dataset.to) d.folder = b.dataset.to; else delete d.folder; await saveDoc(d); showHome(); toast('Design moved'); };
+        popover(e.target.closest('.mv'), `<div class="pop-list"><button data-o="rename">${ic('pencil')} ${tr('Rename')}</button><button data-o="dup">${ic('copy-plus')} ${tr('Duplicate')}</button><hr><h4>${tr('Move to a folder')}</h4>${[{ id: '', name: tr('No folder') }, ...folders].map((f) => `<button data-to="${f.id}" class="${(d.folder || '') === f.id ? 'on' : ''}">${ic(f.id ? 'folder' : 'layout-grid')} ${escapeHtml(f.name)}</button>`).join('')}</div>${folders.length ? '' : `<p class="hint">${tr('Create a folder first with “New folder”.')}</p>`}`, (p) => {
+          p.onclick = async (ev) => {
+            const o = ev.target.closest('[data-o]')?.dataset.o;
+            if (o === 'rename') { closePopover(); askName(tr('Rename'), d.title, async (name) => { d.title = name; await saveDoc(d); showHome(); }); return; }
+            if (o === 'dup') { closePopover(); const copy = JSON.parse(JSON.stringify(d)); copy.id = uid(); copy.title = `${d.title} (${tr('copy')})`; copy.updated = Date.now(); await saveDoc(copy); showHome(); toast('Design duplicated'); return; }
+            const b = ev.target.closest('[data-to]'); if (!b) return; closePopover(); if (b.dataset.to) d.folder = b.dataset.to; else delete d.folder; await saveDoc(d); showHome(); toast('Design moved');
+          };
         });
         return;
       }
       if (e.target.closest('.del')) {
         e.stopPropagation();
-        const b = e.target.closest('.del');
-        popover(b, `<div style="font-weight:600;margin-bottom:6px">${tr('Delete “{name}”?', { name: escapeHtml(d.title) })}</div><div class="hint">This removes it from this computer. It cannot be undone.</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ghost" data-no>Cancel</button><button class="btn primary" data-yes style="background:#C0354F;box-shadow:none">Delete</button></div>`, (p) => {
-          p.querySelector('[data-no]').onclick = closePopover;
-          p.querySelector('[data-yes]').onclick = async () => { closePopover(); await deleteDoc(d.id); showHome(); toast('Design deleted'); };
-        });
+        confirmPopover(e.target.closest('.del'), tr('Delete “{name}”?', { name: escapeHtml(d.title) }) + `<div class="hint">${tr('This removes it from this computer. It cannot be undone.')}</div>`, async () => { await deleteDoc(d.id); showHome(); toast('Design deleted'); });
         return;
       }
       openDoc(d);
@@ -112,8 +117,10 @@ function timeAgo(t) {
   return new Date(t).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB');
 }
 
-function openDoc(doc, isNew = false) {
-  state.doc = doc; state.slide = 0; state.sel = []; state.editingId = null; state.zoom = 'fit';
+export async function openDoc(doc, isNew = false) {
+  await flushSave();
+  try { normalizeDoc(doc); } catch { toast('This design could not be opened'); return; }
+  state.doc = doc; state.slide = 0; state.sel = []; state.editingId = null; state.cell = null; state.tool = null; state.zoom = 'fit';
   resetHistory();
   $('#home').classList.add('hidden'); $('#editor').classList.remove('hidden');
   $('#titleInput').value = doc.title;
@@ -140,31 +147,37 @@ function wireTopbar() {
   $('#zoomVal').title = tr('Fit to screen');
   $('#zoomIn').onclick = () => setZoom(Math.min(4, state.scale * 1.2));
   $('#zoomOut').onclick = () => setZoom(Math.max(0.1, state.scale / 1.2));
-  $('#zoomVal').onclick = () => setZoom('fit');
+  $('#zoomVal').onclick = (e) => popover(e.currentTarget, `<div class="pop-list cols">${['fit', 0.25, 0.5, 0.75, 1, 1.5, 2].map((z) => `<button data-z="${z}">${z === 'fit' ? tr('Fit') : Math.round(z * 100) + '%'}</button>`).join('')}</div>`, (p) => { p.onclick = (ev) => { const z = ev.target.closest('[data-z]')?.dataset.z; if (!z) return; closePopover(); setZoom(z === 'fit' ? 'fit' : +z); }; }, { width: 220 });
   $('#helpBtn').onclick = shortcutsModal;
-  // speaker notes under the slide
+  document.addEventListener('deckly-shortcuts', shortcutsModal);
   const notesBar = $('#notesBar'), notesText = $('#notesText');
   let notesT;
   $('#notesBtn').onclick = () => { notesBar.classList.toggle('hidden'); $('#notesBtn').classList.toggle('on', !notesBar.classList.contains('hidden')); if (!notesBar.classList.contains('hidden')) notesText.focus(); };
   notesText.addEventListener('input', () => { state.doc.slides[state.slide].notes = notesText.value; clearTimeout(notesT); notesT = setTimeout(commit, 600); });
   on((w) => { if (['all', 'slide', 'history'].includes(w) && state.doc && document.activeElement !== notesText) notesText.value = state.doc.slides[state.slide]?.notes || ''; });
   $('#openFileHome').onclick = () => $('#fileOpen').click();
-  $('#homeUpdates').onclick = (e) => popover(e.currentTarget, `<div class="pop-list"><button data-u="check">${ic('refresh-cw')} Check for updates</button><button data-u="settings">${ic('settings')} Update settings…</button></div>`,
+  $('#homeUpdates').onclick = (e) => popover(e.currentTarget, `<div class="pop-list"><button data-u="check">${ic('refresh-cw')} ${tr('Check for updates')}</button><button data-u="settings">${ic('settings')} ${tr('Update settings…')}</button></div>`,
     (p) => { p.onclick = (ev) => { const u = ev.target.closest('[data-u]')?.dataset.u; if (!u) return; closePopover(); if (u === 'check') checkNow(); else askChoice(); }; });
+  $('#homeClaude').onclick = () => document.dispatchEvent(new Event('deckly-claude'));
   $('#fileOpen').addEventListener('change', async (e) => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     openFile(f);
   });
-  // the desktop app passes files opened from Windows (double-click on a .dkly)
   window.decklyDesktop?.onOpenFile?.((bytes) => openFile(bytes));
-  // drop a .dkly file anywhere on the home screen
+  window.decklyDesktop?.onFlush?.(flushSave);
   $('#home').addEventListener('dragover', (e) => e.preventDefault());
   $('#home').addEventListener('drop', (e) => { const f = [...e.dataTransfer.files].find((x) => /\.(dkly|deckly)$/i.test(x.name)); if (f) { e.preventDefault(); openFile(f); } });
-  document.addEventListener('keydown', (e) => { if (e.key === 'F5' && !$('#editor').classList.contains('hidden')) { e.preventDefault(); present(e.shiftKey ? state.slide : 0, hasNotes()); } });
+  document.addEventListener('keydown', (e) => {
+    const inEditor = !$('#editor').classList.contains('hidden'), mod = e.ctrlKey || e.metaKey;
+    if (e.key === 'F5' && inEditor) { e.preventDefault(); present(e.shiftKey ? state.slide : 0, hasNotes()); }
+    if (mod && !e.altKey && inEditor && e.key.toLowerCase() === 's') { e.preventDefault(); saveFile(); }
+    if (mod && !e.altKey && e.key.toLowerCase() === 'o') { e.preventDefault(); $('#fileOpen').click(); }
+    if (mod && !e.altKey && inEditor && e.key.toLowerCase() === 'e') { e.preventDefault(); downloadDialog(modal, closeModal, ic); }
+  });
   on((w) => {
-    if (w === 'saving') $('#saveState').innerHTML = `${ic('loader')}${tr('Saving…')}`;
-    if (w === 'saved') { $('#saveState').innerHTML = `${ic('cloud-check')}${tr('Saved')}`; snapshotVersion(); }
-    if (w === 'savefail') $('#saveState').innerHTML = `${ic('triangle-alert')}${tr('Not saved')}`;
+    if (w === 'saving') { clearTimeout(wireTopbar.st); wireTopbar.st = setTimeout(() => { $('#saveState').innerHTML = `${ic('loader')}${tr('Saving…')}`; }, 400); }
+    if (w === 'saved') { clearTimeout(wireTopbar.st); $('#saveState').innerHTML = `${ic('hard-drive')}${tr('Saved')}`; $('#saveState').title = tr('Saved on this computer'); snapshotVersion(); }
+    if (w === 'savefail') { clearTimeout(wireTopbar.st); $('#saveState').innerHTML = `${ic('triangle-alert')}${tr('Not saved')}`; }
     $('#undoBtn').disabled = !canUndo(); $('#redoBtn').disabled = !canRedo();
   });
   document.querySelectorAll('.net-pill').forEach((p) => (p.onclick = () => {
@@ -180,7 +193,6 @@ function fileAction(a) {
   if (a === 'save') saveFile();
   if (a === 'save-show') saveFile(true);
   if (a === 'png') exportPng();
-  if (a === 'pngt') exportPng(true);
   if (a === 'download') downloadDialog(modal, closeModal, ic);
   if (a === 'resize') resizeDialog(openDoc);
   if (a === 'versions') versionsDialog();
@@ -190,6 +202,8 @@ function fileAction(a) {
   if (a === 'check-updates') checkNow();
   if (a === 'update-settings') askChoice();
   if (a === 'language') langMenu($('#fileMenuBtn'));
+  if (a === 'claude') document.dispatchEvent(new Event('deckly-claude'));
+  if (a === 'credits') creditsDialog();
 }
 function langMenu(anchor) {
   popover(anchor, `<h4>${tr('Language')}</h4><div class="pop-list">${Object.entries(LANGS).map(([k, n]) => `<button data-l="${k}" class="${k === lang ? 'on' : ''}">${k === lang ? ic('check') : ic('languages')} ${n}</button>`).join('')}</div>`,
@@ -204,6 +218,15 @@ function updateNet() {
   });
 }
 const hasNotes = () => state.doc.slides.some((s) => (s.notes || '').trim());
+
+async function creditsDialog() {
+  let list = [];
+  try { list = await (await fetch('assets/credits-packs.json')).json(); } catch { /* */ }
+  modal(`<h3>${ic('badge-info')} ${tr('Credits & licences')}</h3><p class="hint" style="font-size:13px">${tr('Every element built into Deckly comes from an open-licence project. Packs marked CC BY ask you to credit their author when you publish a design that uses them; the others ask nothing.')}</p>
+    <div class="credits-list"><table>${list.map((c) => `<tr><td><b>${escapeHtml(c[0])}</b><br><a href="${escapeHtml(c[2])}" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px">${escapeHtml(c[2])}</a></td><td>${escapeHtml(c[1])}<br>${(+c[3] || 0).toLocaleString('fr-FR')}</td></tr>`).join('')}</table></div>
+    <p class="hint">${tr('Photos: each one shows its author and licence when you hover it in the Photos panel; your design keeps that credit (the ⓘ button of a selected photo).')}</p>
+    <div style="text-align:right;margin-top:12px"><button class="btn primary" data-close>${tr('Close')}</button></div>`, { width: 640 });
+}
 
 // Opens a .dkly (or older .deckly) file: keeps a copy in "Your designs", and plays it right away if it was saved that way.
 async function openFile(fileOrBytes) {

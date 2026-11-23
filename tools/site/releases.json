@@ -1,0 +1,35 @@
+[
+  {
+    "version": "1.3.0",
+    "date": "2026-11-23",
+    "title": "110 000 éléments, tableaux, graphiques, dessin — et Claude",
+    "items": [
+      "Un nouveau panneau Éléments : 223 formes, lignes à deux extrémités, 25 000 illustrations en 28 styles, 9 000 stickers (dont 1 600 en 3D), 60 000 icônes, 1 000 drapeaux, 14 000 logos, cadres (lettres, appareils), grilles, maquettes.",
+      "Recherche en français et en anglais dans toute la bibliothèque : « tableau », « flèche », « cœur »… trouvent tout de suite.",
+      "Vrais tableaux (cellules modifiables, styles, bordures) et vrais graphiques (colonnes, barres, courbes, aires, camembert, anneau) : ils restent modifiables dans PowerPoint.",
+      "Texte dans les formes, codes QR hors ligne, stylo / marqueur / surligneur, effets de texte (néon, relief, creux…), motifs de fond, 147 polices.",
+      "Claude peut créer et modifier vos présentations : Fichier → Connecter Claude (Claude Desktop ou Claude Code).",
+      "Menus du clic droit, position et calques, grille des diapos, diapos masquées, copier / coller le style, zoom sous le curseur, raccourcis, nouveau logo."
+    ]
+  },
+  {
+    "version": "1.2.0",
+    "date": "2026-11-22",
+    "title": "Animations et fichier .dkly",
+    "items": [
+      "26 animations d’entrée, sorties, boucles, texte par lettre / mot / ligne, éléments au clic, 10 transitions dont « Déplacer et associer ».",
+      "Le fichier .dkly : une présentation complète (diapos, animations, photos, polices) qui s’ouvre d’un double-clic, même hors ligne.",
+      "Mode diaporama : un .dkly qui s’ouvre directement en présentation."
+    ]
+  },
+  {
+    "version": "1.1.0",
+    "date": "2026-11-21",
+    "title": "Les fonctions payantes des autres, incluses",
+    "items": [
+      "Suppression d’arrière-plan hors ligne, redimensionnement magique, historique des versions, kits de marque, polices personnalisées, modèles personnels, dossiers.",
+      "Export haute résolution (×2, ×3, 4K), PDF impression, SVG, PowerPoint avec notes.",
+      "Mode présentateur avec notes, chronomètre et diapo suivante."
+    ]
+  }
+]

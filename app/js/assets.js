@@ -1,93 +1,38 @@
 // The built-in element library (all stored locally in app/assets) + UI icon helper.
-export const packs = { lucide: {}, stickers: {}, logos: {}, fonts: [], photos: [] };
+// The big packs (60+ of them) are loaded on demand by library.js.
+import { SHAPES, FRAMES, shapeSvg, clipPathFor } from './shapes.js';
+export { SHAPES, FRAMES, shapeSvg, clipPathFor };
+
+export const packs = { lucide: {}, stickers: {}, stickerCats: {}, logos: {}, fonts: [], fontMeta: [], photos: [], allPhotos: [] };
 
 export async function loadPacks() {
   const j = (u) => fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const [lucide, fonts, photos] = await Promise.all([
     j('assets/icons/lucide.json'), j('assets/fonts/fonts.json'), j('assets/photos/photos.json'),
   ]);
-  packs.lucide = lucide || {}; packs.fonts = fonts || ['Inter']; packs.photos = photos || [];
+  packs.lucide = lucide || {}; packs.allPhotos = photos || []; packs.photos = packs.allPhotos.filter((p) => !p.legacy);
+  const meta = Array.isArray(fonts) ? fonts.map((f) => (typeof f === 'string' ? { name: f, cat: 'sans' } : f)) : [{ name: 'Inter', cat: 'sans' }];
+  packs.fontMeta = meta; packs.fonts = meta.map((f) => f.name);
   // The bigger packs load in the background.
   j('assets/icons/stickers.json').then((d) => { packs.stickers = d || {}; document.dispatchEvent(new Event('packs')); });
   j('assets/icons/logos.json').then((d) => { packs.logos = d || {}; document.dispatchEvent(new Event('packs')); });
 }
+export const fontCat = (name) => packs.fontMeta.find((f) => f.name === name)?.cat || 'custom';
 
 // UI icons (Lucide)
 export function ic(name, cls = 'ic') {
   const i = packs.lucide[name] || packs.lucide['circle'];
-  return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${i ? i.b : ''}</svg>`;
+  return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${i ? i.b : ''}</svg>`;
 }
 export function hydrateIcons(root = document) {
   root.querySelectorAll('i[data-ic]').forEach((n) => { n.outerHTML = ic(n.dataset.ic); });
 }
 
+const safe = (c) => String(c || '#1E1F2B').replace(/[^#\w(),.% -]/g, '');
 export const lucideSvg = (name, color = '#1E1F2B', sw = 2) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" preserveAspectRatio="none">${packs.lucide[name]?.b || ''}</svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${safe(color)}" stroke-width="${+sw || 2}" stroke-linecap="round" stroke-linejoin="round" preserveAspectRatio="none">${packs.lucide[name]?.b || ''}</svg>`;
 export const iconifySvg = (it) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${it.w || 32} ${it.h || 32}" preserveAspectRatio="xMidYMid meet">${it.b}</svg>`;
-
-// ---------- shapes (viewBox 0 0 100 100) ----------
-const poly = (n, r = 50, rot = -90, cx = 50, cy = 50) =>
-  Array.from({ length: n }, (_, i) => { const a = (rot + (360 / n) * i) * Math.PI / 180; return `${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`; }).join(' ');
-const star = (n, ro = 50, ri = 22) =>
-  Array.from({ length: n * 2 }, (_, i) => { const r = i % 2 ? ri : ro; const a = (-90 + (180 / n) * i) * Math.PI / 180; return `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`; }).join(' ');
-
-export const SHAPES = {
-  rect: { name: 'Square', css: true },
-  rounded: { name: 'Rounded square', css: true, radius: 18 },
-  circle: { name: 'Circle', css: true, circle: true },
-  triangle: { name: 'Triangle', d: 'M50 2 L98 98 L2 98 Z' },
-  rtriangle: { name: 'Right triangle', d: 'M2 2 L98 98 L2 98 Z' },
-  diamond: { name: 'Diamond', d: 'M50 1 L99 50 L50 99 L1 50 Z' },
-  pentagon: { name: 'Pentagon', pts: poly(5) },
-  hexagon: { name: 'Hexagon', pts: poly(6, 50, 0) },
-  octagon: { name: 'Octagon', pts: poly(8, 50, 22.5) },
-  star5: { name: 'Star', pts: star(5, 50, 21) },
-  star4: { name: 'Sparkle', d: 'M50 0 C54 38 62 46 100 50 C62 54 54 62 50 100 C46 62 38 54 0 50 C38 46 46 38 50 0 Z' },
-  burst: { name: 'Burst', pts: star(12, 50, 38) },
-  heart: { name: 'Heart', d: 'M50 92 C20 70 2 52 2 30 C2 14 14 4 28 4 C38 4 46 10 50 18 C54 10 62 4 72 4 C86 4 98 14 98 30 C98 52 80 70 50 92 Z' },
-  arrowR: { name: 'Arrow', d: 'M2 34 L60 34 L60 10 L98 50 L60 90 L60 66 L2 66 Z' },
-  arrowL: { name: 'Arrow left', d: 'M98 34 L40 34 L40 10 L2 50 L40 90 L40 66 L98 66 Z' },
-  chevron: { name: 'Chevron', d: 'M2 2 L70 2 L98 50 L70 98 L2 98 L30 50 Z' },
-  pentArrow: { name: 'Tag', d: 'M2 2 L75 2 L98 50 L75 98 L2 98 Z' },
-  plus: { name: 'Plus', d: 'M36 2 H64 V36 H98 V64 H64 V98 H36 V64 H2 V36 H36 Z' },
-  parallelogram: { name: 'Parallelogram', d: 'M25 2 L98 2 L75 98 L2 98 Z' },
-  trapezoid: { name: 'Trapezoid', d: 'M22 2 L78 2 L98 98 L2 98 Z' },
-  bubble: { name: 'Speech bubble', d: 'M12 4 H88 Q98 4 98 14 V62 Q98 72 88 72 H40 L18 96 L22 72 H12 Q2 72 2 62 V14 Q2 4 12 4 Z' },
-  cloudy: { name: 'Thought cloud', d: 'M27 80 C10 80 2 68 6 56 C-2 46 6 30 20 32 C22 14 42 8 54 18 C64 6 86 10 88 28 C100 32 102 52 90 58 C96 72 82 84 68 78 C60 90 38 92 27 80 Z' },
-  arch: { name: 'Arch', d: 'M2 98 V50 A48 48 0 0 1 98 50 V98 Z' },
-  half: { name: 'Half circle', d: 'M2 98 A48 48 0 0 1 98 98 Z' },
-  quarter: { name: 'Quarter circle', d: 'M2 98 V2 A96 96 0 0 1 98 98 Z' },
-  ring: { name: 'Ring', d: 'M50 2 A48 48 0 1 0 50.01 2 Z M50 26 A24 24 0 1 1 49.99 26 Z', evenodd: true },
-  blob1: { name: 'Blob', d: 'M70 8 C88 16 98 36 94 56 C90 78 72 96 48 94 C24 92 6 76 4 52 C2 28 22 6 44 4 C54 3 62 4 70 8 Z' },
-  blob2: { name: 'Pebble', d: 'M60 4 C84 6 100 28 96 52 C92 74 80 98 52 96 C26 94 2 82 4 54 C6 26 30 2 60 4 Z' },
-  wave: { name: 'Wave band', d: 'M0 30 C20 10 40 10 50 30 C60 50 80 50 100 30 V100 H0 Z' },
-  cross: { name: 'Cross', d: 'M20 2 L50 32 L80 2 L98 20 L68 50 L98 80 L80 98 L50 68 L20 98 L2 80 L32 50 L2 20 Z' },
-  line: { name: 'Line', line: true },
-  arrowLine: { name: 'Arrow line', line: true, arrow: true },
-  dashLine: { name: 'Dashed line', line: true, dash: true },
-  dotLine: { name: 'Dotted line', line: true, dot: true },
-};
-export const FRAMES = ['rect', 'rounded', 'circle', 'blob1', 'blob2', 'heart', 'hexagon', 'star5', 'arch', 'diamond', 'triangle', 'bubble'];
-
-export function shapeSvg(key, fill, stroke = 'none', sw = 0, extra = '') {
-  const s = SHAPES[key] || SHAPES.rect;
-  const st = `fill="${fill}" stroke="${stroke}" stroke-width="${sw}" vector-effect="non-scaling-stroke" stroke-linejoin="round"`;
-  let body;
-  if (s.circle) body = `<ellipse cx="50" cy="50" rx="50" ry="50" ${st}/>`;
-  else if (s.css) body = `<rect x="0" y="0" width="100" height="100" rx="${s.radius || 0}" ${st}/>`;
-  else if (s.pts) body = `<polygon points="${s.pts}" ${st}/>`;
-  else body = `<path d="${s.d}" ${st} ${s.evenodd ? 'fill-rule="evenodd"' : ''}/>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none" ${extra}>${body}</svg>`;
-}
-export function clipPathFor(key) {
-  const s = SHAPES[key];
-  if (!s || key === 'rect') return '';
-  if (s.circle) return 'ellipse(50% 50% at 50% 50%)';
-  if (s.css) return `inset(0 round ${s.radius || 0}%)`;
-  if (s.pts) return `polygon(${s.pts.split(' ').map((p) => p.split(',').map((v) => v + '%').join(' ')).join(',')})`;
-  return `path-${key}`; // handled with an SVG clipPath
-}
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${it.x || 0} ${it.y || 0} ${it.w || 32} ${it.h || 32}" preserveAspectRatio="xMidYMid meet">${it.b}</svg>`;
 
 // ---------- colours ----------
 export const PALETTE = ['#FFFFFF', '#F3F4F8', '#D9DBE6', '#9295A8', '#5B5E73', '#2E3040', '#000000',
@@ -103,6 +48,21 @@ export const GRADIENTS = [
   'linear-gradient(180deg,#141E30,#243B55)', 'linear-gradient(135deg,#FFECD2,#FCB69F)', 'radial-gradient(circle at 30% 30%,#FFFFFF,#E3DBFF)',
   'linear-gradient(135deg,#11998E,#38EF7D)', 'linear-gradient(135deg,#FC466B,#3F5EFB)', 'linear-gradient(135deg,#F5F7FA,#C3CFE2)',
   'linear-gradient(135deg,#1A2A6C,#B21F1F,#FDBB2D)', 'linear-gradient(160deg,#0B0B1A,#2A1B5C 60%,#6C4CF5)', 'linear-gradient(135deg,#FFF6E5,#FFE0E9)',
+];
+// background patterns (drawn in CSS, no file needed)
+export const PATTERNS = [
+  ['Dots', (c, b) => `background-color:${b};background-image:radial-gradient(${c} 2px, transparent 2.5px);background-size:28px 28px`],
+  ['Grid', (c, b) => `background-color:${b};background-image:linear-gradient(${c} 1px, transparent 1px),linear-gradient(90deg, ${c} 1px, transparent 1px);background-size:48px 48px`],
+  ['Stripes', (c, b) => `background:repeating-linear-gradient(45deg, ${b}, ${b} 18px, ${c} 18px, ${c} 20px)`],
+  ['Lines', (c, b) => `background:repeating-linear-gradient(0deg, ${b}, ${b} 30px, ${c} 30px, ${c} 32px)`],
+  ['Checks', (c, b) => `background-color:${b};background-image:linear-gradient(45deg, ${c} 25%, transparent 25%),linear-gradient(-45deg, ${c} 25%, transparent 25%),linear-gradient(45deg, transparent 75%, ${c} 75%),linear-gradient(-45deg, transparent 75%, ${c} 75%);background-size:60px 60px;background-position:0 0,0 30px,30px -30px,-30px 0`],
+  ['Cross dots', (c, b) => `background-color:${b};background-image:radial-gradient(${c} 1.5px, transparent 2px),radial-gradient(${c} 1.5px, ${b} 2px);background-size:36px 36px;background-position:0 0,18px 18px`],
+  ['Waves', (c, b) => `background-color:${b};background-image:radial-gradient(circle at 50% 120%, transparent 60%, ${c} 61%, ${c} 63%, transparent 64%);background-size:80px 40px`],
+  ['Zigzag', (c, b) => `background:linear-gradient(135deg, ${c} 25%, transparent 25%) -20px 0, linear-gradient(225deg, ${c} 25%, transparent 25%) -20px 0, linear-gradient(315deg, ${c} 25%, transparent 25%), linear-gradient(45deg, ${c} 25%, transparent 25%);background-size:40px 40px;background-color:${b}`],
+  ['Diagonal', (c, b) => `background:repeating-linear-gradient(-45deg, ${b}, ${b} 40px, ${c} 40px, ${c} 42px)`],
+  ['Triangles', (c, b) => `background-color:${b};background-image:linear-gradient(60deg, ${c} 25%, transparent 25.5%, transparent 75%, ${c} 75%),linear-gradient(120deg, ${c} 25%, transparent 25.5%, transparent 75%, ${c} 75%);background-size:60px 104px`],
+  ['Honeycomb', (c, b) => `background-color:${b};background-image:radial-gradient(circle farthest-side at 0% 50%, ${b} 23.5%, transparent 0) 21px 30px,radial-gradient(circle farthest-side at 0% 50%, ${c} 24%, transparent 0) 19px 30px,linear-gradient(${b} 14%, transparent 0, transparent 85%, ${b} 0) 0 0,linear-gradient(150deg, ${b} 24%, ${c} 0, ${c} 26%, transparent 0, transparent 74%, ${c} 0, ${c} 76%, ${b} 0) 0 0,linear-gradient(30deg, ${b} 24%, ${c} 0, ${c} 26%, transparent 0, transparent 74%, ${c} 0, ${c} 76%, ${b} 0) 0 0,linear-gradient(90deg, ${c} 2%, ${b} 0, ${b} 98%, ${c} 0%) 0 0;background-size:40px 60px`],
+  ['Confetti', (c, b) => `background-color:${b};background-image:radial-gradient(${c} 3px, transparent 3.5px),radial-gradient(#FFC83D 3px, transparent 3.5px),radial-gradient(#FF6B8B 3px, transparent 3.5px);background-size:90px 90px,120px 120px,70px 70px;background-position:0 0,30px 40px,50px 10px`],
 ];
 export const isLight = (hex) => {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return true;

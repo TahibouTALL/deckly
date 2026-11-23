@@ -15,12 +15,396 @@
   "SVG Logos (gilbarbara)",
   "CC0",
   "https://github.com/gilbarbara/logos",
-  2305
+  2066
+ ],
+ [
+  "Tabler Icons",
+  "MIT",
+  "https://github.com/tabler/tabler-icons",
+  6545
+ ],
+ [
+  "Phosphor",
+  "MIT",
+  "https://github.com/phosphor-icons/core",
+  4536
+ ],
+ [
+  "Solar",
+  "CC BY 4.0",
+  "https://www.figma.com/community/file/1166831539721848736",
+  3192
+ ],
+ [
+  "Material Symbols",
+  "Apache 2.0",
+  "https://github.com/google/material-design-icons",
+  5695
+ ],
+ [
+  "Fluent UI System Icons",
+  "MIT",
+  "https://github.com/microsoft/fluentui-system-icons",
+  5004
+ ],
+ [
+  "MingCute Icon",
+  "Apache 2.0",
+  "https://github.com/Richard9394/MingCute",
+  4526
+ ],
+ [
+  "Huge Icons",
+  "MIT",
+  "https://icon-sets.iconify.design/icon-sets/hugeicons/",
+  6114
+ ],
+ [
+  "Remix Icon",
+  "Apache 2.0",
+  "https://github.com/cyberalien/RemixIcon",
+  3188
+ ],
+ [
+  "Bootstrap Icons",
+  "MIT",
+  "https://github.com/twbs/icons",
+  2078
+ ],
+ [
+  "Iconoir",
+  "MIT",
+  "https://github.com/iconoir-icons/iconoir",
+  1671
+ ],
+ [
+  "HeroIcons",
+  "MIT",
+  "https://github.com/tailwindlabs/heroicons",
+  648
+ ],
+ [
+  "Carbon",
+  "Apache 2.0",
+  "https://github.com/carbon-design-system/carbon/tree/main/packages/icons",
+  2644
+ ],
+ [
+  "Myna UI Icons",
+  "MIT",
+  "https://github.com/praveenjuge/mynaui-icons",
+  2622
+ ],
+ [
+  "TDesign Icons",
+  "MIT",
+  "https://github.com/Tencent/tdesign-icons",
+  2358
+ ],
+ [
+  "IconPark Outline",
+  "Apache 2.0",
+  "https://github.com/bytedance/IconPark",
+  2658
+ ],
+ [
+  "IconPark Solid",
+  "Apache 2.0",
+  "https://github.com/bytedance/IconPark",
+  1947
+ ],
+ [
+  "Pixelarticons",
+  "MIT",
+  "https://github.com/halfmage/pixelarticons",
+  1036
+ ],
+ [
+  "Health Icons",
+  "MIT",
+  "https://github.com/resolvetosavelives/healthicons",
+  2128
+ ],
+ [
+  "Game Icons",
+  "CC BY 3.0",
+  "https://github.com/game-icons/icons",
+  4133
+ ],
+ [
+  "Pinhead Map Icons",
+  "CC0",
+  "https://github.com/waysidemapping/pinhead",
+  2847
+ ],
+ [
+  "Temaki",
+  "CC0",
+  "https://github.com/rapideditor/temaki",
+  557
+ ],
+ [
+  "Maki",
+  "CC0",
+  "https://github.com/mapbox/maki",
+  215
+ ],
+ [
+  "Weather Icons",
+  "Open Font License",
+  "https://github.com/erikflowers/weather-icons",
+  219
+ ],
+ [
+  "with icons Sticker",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Clay",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Soft 3D",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Plush",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Pastel",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Kawaii",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Retro",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Glass",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Suite",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Skeuo",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Bento",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Liquid",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Chrome",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Luxe",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Christmas",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Halloween",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "with icons Valentine",
+  "MIT",
+  "https://github.com/withevergrow/withicons",
+  1000
+ ],
+ [
+  "Fluent UI System Color Icons",
+  "MIT",
+  "https://github.com/microsoft/fluentui-system-icons",
+  890
+ ],
+ [
+  "Flat Color Icons",
+  "MIT",
+  "https://github.com/icons8/flat-Color-icons",
+  329
+ ],
+ [
+  "Glyphs Poly",
+  "MIT",
+  "https://github.com/gorango/glyphs",
+  863
+ ],
+ [
+  "IconPark",
+  "Apache 2.0",
+  "https://github.com/bytedance/IconPark",
+  2658
+ ],
+ [
+  "Marketeq",
+  "MIT",
+  "",
+  590
+ ],
+ [
+  "Plump color icons",
+  "CC BY 4.0",
+  "https://github.com/webalys-hq/streamline-vectors",
+  1000
+ ],
+ [
+  "Freehand color icons",
+  "CC BY 4.0",
+  "https://github.com/webalys-hq/streamline-vectors",
+  1000
+ ],
+ [
+  "Ultimate color icons",
+  "CC BY 4.0",
+  "https://github.com/webalys-hq/streamline-vectors",
+  998
+ ],
+ [
+  "Kameleon color icons",
+  "CC BY 4.0",
+  "https://github.com/webalys-hq/streamline-vectors",
+  600
+ ],
+ [
+  "Streamline color",
+  "CC BY 4.0",
+  "https://github.com/webalys-hq/streamline-vectors",
+  2000
+ ],
+ [
+  "Meteocons",
+  "MIT",
+  "https://github.com/basmilius/weather-icons",
+  447
+ ],
+ [
+  "Noto Emoji",
+  "Apache 2.0",
+  "https://github.com/googlefonts/noto-emoji",
+  1776
+ ],
+ [
+  "Twitter Emoji",
+  "CC BY 4.0",
+  "https://github.com/jdecked/twemoji",
+  2030
+ ],
+ [
+  "Streamline Emojis",
+  "CC BY 4.0",
+  "https://github.com/webalys-hq/streamline-vectors",
+  787
+ ],
+ [
+  "Firefox OS Emoji",
+  "Apache 2.0",
+  "https://github.com/mozilla/fxemoji",
+  1034
+ ],
+ [
+  "Circle Flags",
+  "MIT",
+  "https://github.com/HatScripts/circle-flags",
+  444
+ ],
+ [
+  "Flag Icons",
+  "MIT",
+  "https://github.com/lipis/flag-icons",
+  285
+ ],
+ [
+  "Tabler Flags",
+  "MIT",
+  "https://github.com/tabler/tabler-flags",
+  297
+ ],
+ [
+  "theSVG Color",
+  "MIT",
+  "https://github.com/glincker/thesvg",
+  5226
+ ],
+ [
+  "Simple Icons",
+  "CC0 1.0",
+  "https://github.com/simple-icons/simple-icons",
+  3472
+ ],
+ [
+  "Skill Icons",
+  "MIT",
+  "https://github.com/tandpfun/skill-icons",
+  400
+ ],
+ [
+  "Devicon",
+  "MIT",
+  "https://github.com/devicons/devicon/tree/master",
+  1162
+ ],
+ [
+  "Cryptocurrency Color Icons",
+  "CC0 1.0",
+  "https://github.com/atomiclabs/cryptocurrency-icons",
+  483
  ],
  [
   "Fonts via Fontsource",
-  "SIL OFL 1.1",
+  "SIL OFL 1.1 / Apache 2.0 / UFL",
   "https://fontsource.org",
-  16
+  147
+ ],
+ [
+  "qrcode-generator (Kazuhiko Arase)",
+  "MIT",
+  "https://github.com/kazuhikoarase/qrcode-generator",
+  1
  ]
 ]
